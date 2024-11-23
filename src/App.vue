@@ -3,20 +3,13 @@
 
   
   const registros = ref([])
-
   const memoriaRam = ref([])
-
   const errores = ref([])
-
   const signo = ref("")
-
   const insTextoHexa = reactive({
     texto: ""
   })
-
   const listaInsHexa = ref([])
-  const listaInsBin = ref([])
-
   const pc = ref(0)
 
   onMounted(() => {
@@ -58,7 +51,10 @@
 
     registros.value = registros.value.map(i => hexadecimalADecimalConSigno(i))
     memoriaRam.value = memoriaRam.value.map(i => hexadecimalADecimalConSigno(i))
-    pc.value ++
+    if(pc.value>31)
+      pc.value = 32
+    else
+      pc.value ++
 
     switch (opcode) {
       case "0001": //add
@@ -106,10 +102,7 @@
       case "0111": //str
         memoriaRam.value[registros.value[baseR] + offset6] = registros.value[sr]
       break;
-      /*case "1111": //trap 
-      break;
-      case "1000": //rti
-      break; sin incluir en el lab 2*/
+    
       default:
       break;
     }
