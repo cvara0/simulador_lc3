@@ -31,10 +31,11 @@
       listaInsHexa.value.forEach((valor, i) => {
         memoriaRam.value[ini + i] = valor;
       });
+      pc.value = ini
       //listaInsHexa.value.forEach((ins, i) => (memoriaRam.value[i] = ins));
     } 
   }
-
+//todo rellenar con 00 para que no quede vacio
   const recorrer = () => {
     
     let insBin = parseInt(memoriaRam.value[pc.value], 16).toString(2).padStart(16, '0')//de hexa  abinario y rellena con 0
