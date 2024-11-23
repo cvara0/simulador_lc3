@@ -10,6 +10,7 @@
     texto: ""
   })
   const listaInsHexa = ref([])
+  const inicio = ref("0")
   const pc = ref(0)
 
   onMounted(() => {
@@ -18,7 +19,7 @@
   })
 
   const cargar = () => {
-  
+    let ini = hexadecimalADecimalConSigno(inicio.value)
     const lineas = insTextoHexa.texto.trim().split("\n").map(linea => linea.trim());
     errores.value = lineas
       .map((linea, index) => ({ linea: index + 1, valida: /^[0-9A-Fa-f]{4}$/.test(linea) }))
@@ -26,7 +27,11 @@
 
     if (errores.value.length === 0) {
       listaInsHexa.value = lineas.map(i => i.toUpperCase());
-      listaInsHexa.value.forEach((ins, i) => (memoriaRam.value[1 + i] = ins));
+      
+      listaInsHexa.value.forEach((valor, i) => {
+        memoriaRam.value[ini + i] = valor;
+      });
+      //listaInsHexa.value.forEach((ins, i) => (memoriaRam.value[i] = ins));
     } 
   }
 
@@ -173,7 +178,12 @@ function hexadecimalADecimalConSigno(hex) {
     
     <div class="col-4">
         <h4 class="mt-4">Instrucciones en Hexadecimal</h4>
+        
         <form @submit.prevent="cargar" class="form-floating d-grid gap-2">
+          <div class="input-group input-group">
+            <span class="input-group-text">Iniciar en: </span>
+            <input v-model="inicio" type="text" class="form-control">
+          </div>
           <button type="submit" class="btn btn-warning">Cargar a memoria ⤴</button>
           <textarea v-model="insTextoHexa.texto" class="numbered" style="height: 400px"></textarea>
         </form>
@@ -203,7 +213,6 @@ function hexadecimalADecimalConSigno(hex) {
         </button>
         <button @click="pc=0" type="button" class="col btn btn-danger m-2">Reiniciar PC
         </button>
-      
         <button @click="recorrer" type="button" class="col btn btn-primary m-2">Recorrer PC: {{pc}} ⤵</button>
       </div>
 
