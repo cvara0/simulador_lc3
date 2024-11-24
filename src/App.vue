@@ -204,6 +204,9 @@ const limpiarRegistros = () => {
 };
 
 ///////////////////////////////////////////////////////////////////////
+
+
+
 </script>
 
 <template>
@@ -268,7 +271,7 @@ const limpiarRegistros = () => {
               v-for="(item, index) in memoriaRam"
               :class="[pc == index ? 'table-primary' : 'table-ligth']"
             >
-              <td v-show="(desplazamiento <= index) && (index<desplazamiento+12)">x{{ index }}</td>
+              <td v-show="(desplazamiento <= index) && (index<desplazamiento+12)">x{{ decimalASignoHexadecimal(index).padStart(4, "0") }}</td>
               <td v-show="(desplazamiento <= index) && (index<desplazamiento+12)">{{ item }}</td>
               <!--<td>proximamente</td>-->
             </tr>
