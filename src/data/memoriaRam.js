@@ -1,0 +1,1 @@
+export const memoriaArray = new Uint16Array(64)
