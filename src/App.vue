@@ -40,7 +40,7 @@ const handleWheel = (event) => {
       }else{
         desplazamiento.value--
       }
-      desplazamiento.value = desplazamiento.value <= 0 ? 0 : desplazamiento.value > 32 ? 32 : desplazamiento.value
+      desplazamiento.value = desplazamiento.value <= 0 ? 0 : desplazamiento.value > 65526 ? 65526 : desplazamiento.value
     };
 
 onUnmounted(() => {
@@ -89,7 +89,7 @@ const recorrer = () => {
 
   registros.value = registros.value.map((i) => hexadecimalADecimalConSigno(i));
   memoriaRam.value = memoriaRam.value.map((i) => hexadecimalADecimalConSigno(i));
-  if (pc.value > 65767) pc.value = 65767;
+  if (pc.value > 65536) pc.value = 65536;
   else pc.value++;
 
   switch (opcode) {
@@ -197,7 +197,7 @@ function hexadecimalADecimalConSigno(hex) {
 }
 
 const limpiarMemoria = () => {
-  memoriaRam.value = new Array(64).fill(0)
+  memoriaRam.value = new Uint16Array(65536)
 };
 const limpiarRegistros = () => {
   registros.value = new Array(8).fill(0);
@@ -255,6 +255,10 @@ const limpiarRegistros = () => {
           <button @click="recorrer" type="button" class="col btn btn-primary m-2">
             Recorrer PC: {{ pc }} ⤵
           </button>
+          <div class="form-floating">
+            <input class="form-control" placeholder="Leave a comment here" id="floatingTextarea">
+            <label for="floatingTextarea"> 🔍 X</label>
+          </div>
         </div>
 
         <table class="table table-hover">
@@ -270,10 +274,10 @@ const limpiarRegistros = () => {
               @click="pc = index"
               v-for="(item, index) in memoriaRam"
               :class="[pc == index ? 'table-primary' : 'table-ligth']"
+              v-show="(desplazamiento <= index) && (index<desplazamiento+10)"
             >
-              <td v-show="(desplazamiento <= index) && (index<desplazamiento+12)">x{{ decimalASignoHexadecimal(index).padStart(4, "0") }}</td>
-              <td v-show="(desplazamiento <= index) && (index<desplazamiento+12)">{{ item }}</td>
-              <!--<td>proximamente</td>-->
+              <td>x{{ decimalASignoHexadecimal(index).padStart(4, "0") }}</td>
+              <td>{{ item }}</td>
             </tr>
           </tbody>
         </table>
