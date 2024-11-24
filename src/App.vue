@@ -213,7 +213,7 @@ const limpiarRegistros = () => {
   <div class="container mt-5">
     <div class="row">
       <div class="col-4">
-        <h4 class="mt-4">Instrucciones en Hexadecimal {{ desplazamiento }}</h4>
+        <h4 class="mt-4">Instrucciones en Hexadecimal</h4>
 
         <form @submit.prevent="cargar" class="form-floating d-grid gap-2">
           <div class="input-group input-group">
@@ -269,7 +269,7 @@ const limpiarRegistros = () => {
               :class="[pc == index ? 'table-primary' : 'table-ligth']"
             >
               <td v-show="(desplazamiento <= index) && (index<desplazamiento+12)">x{{ index }}</td>
-              <td v-show="(desplazamiento <= index) && (index<desplazamiento+12)">{{ item }} {{ desplazamiento }}</td>
+              <td v-show="(desplazamiento <= index) && (index<desplazamiento+12)">{{ item }}</td>
               <!--<td>proximamente</td>-->
             </tr>
           </tbody>
