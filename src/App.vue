@@ -264,7 +264,7 @@ const limpiarRegistros = () => {
           </button>
           <div class="form-floating">
             <input class="form-control" placeholder="Leave a comment here" id="floatingTextarea">
-            <label for="floatingTextarea" placeholder="en construccion"> 🔍 X</label>
+            <label for="floatingTextarea" > 🔍 X (en desarrollo)</label>
           </div>
         </div>
 
