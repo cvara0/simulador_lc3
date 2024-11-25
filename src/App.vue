@@ -204,7 +204,7 @@ function hexadecimalADecimalConSigno(hex) {
 }
 
 const limpiarMemoria = () => {
-  memoriaRam.value = new Int32Array(65536)
+  memoriaRam.value = new Int32Array(16384)
 };
 const limpiarRegistros = () => {
   registros.value = new Array(8).fill(0);
