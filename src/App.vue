@@ -210,10 +210,18 @@ function hexadecimalADecimalConSigno(hex) {
 
 const limpiarMemoria = () => {
   memoriaRam.value = new Int32Array(16384)
-};
+}
 const limpiarRegistros = () => {
   registros.value = new Array(8).fill("0000")
-};
+}
+
+const reiniciarPc = computed(()=>{
+  pc.value = hexadecimalADecimalConSigno(inicio.value)
+  desplazamiento.value = pc.value < 3 ? pc.value :pc.value - 3
+})
+
+const indiceRecorrer = computed(() => decimalASignoHexadecimal(pc.value).padStart(4, "0") ) 
+
 ////////////////////////////////////////////////////////////////////////////////
 function* DecimalAHexaGenerator(array) {
   for (const decimal of array) {
@@ -280,11 +288,11 @@ function* DecimalSignoAHexaGenerator1(decimal) {
           <button @click="limpiarMemoria" type="button" class="col btn btn-danger m-2">
             Limpiar memoria
           </button>
-          <button @click="pc = hexadecimalADecimalConSigno(inicio); desplazamiento = pc < 3 ? pc :pc - 3 " type="button" class="col btn btn-danger m-2">
+          <button @click="reiniciarPc" type="button" class="col btn btn-danger m-2">
             Reiniciar PC
           </button>
           <button @click="recorrer" type="button" class="col btn btn-primary m-2">
-            Recorrer PC: X{{ decimalASignoHexadecimal(pc).padStart(4, "0") }} ⤵
+            Recorrer PC: X{{ indiceRecorrer }} ⤵
           </button>
           <div class="form-floating">
             <input class="form-control" placeholder="Leave a comment here" id="floatingTextarea">
