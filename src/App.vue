@@ -1,5 +1,6 @@
 <script setup>
 import { ref, reactive, onMounted, computed,onUnmounted } from "vue";
+import Registros from "./components/Registros.vue";
 
 const registros = ref([]);
 const memoriaRam = ref('');
@@ -63,7 +64,7 @@ const cargar = () => {
       memoriaRam.value[ini + i] = parseInt(valor, 16)
     })
     pc.value = ini
-    desplazamiento.value = ini - 5 
+    desplazamiento.value = pc.value > 0 && pc.value<3? pc.value -2 : pc.value - 3
   }
 };
 
@@ -73,86 +74,87 @@ const recorrer = computed(() => {
   let insBin = memoriaRam.value[pc.value].toString(2).padStart(16, '0') 
   console.log(insBin);
   
-  let opcode = insBin.substring(0, 4);
-  let dr = parseInt(insBin.substring(4, 7), 2); //convierte de binario a entero
-  let sr = dr;
-  let sr1 = parseInt(insBin.substring(7, 10), 2);
-  let baseR = sr1;
-  let bitImm5 = parseInt(insBin.substring(10, 11), 2);
-  let imm5 = binarioC2ADecimal(insBin.substring(11, 16));
-  let sr2 = parseInt(insBin.substring(13, 16), 2);
-  let PCoffset9 = binarioC2ADecimal(insBin.substring(7, 16), 2);
-  let PCoffset11 = binarioC2ADecimal(insBin.substring(5, 16), 2);
-  let n = insBin.substring(4, 5);
-  let z = insBin.substring(5, 6);
-  let p = insBin.substring(6, 7);
-  let offset6 = binarioC2ADecimal(insBin.substring(10, 16));
+  const ins = {
+    opcode: insBin.substring(0, 4),
+    dr: parseInt(insBin.substring(4, 7), 2),
+    sr: parseInt(insBin.substring(4, 7), 2),
+    sr1: parseInt(insBin.substring(7, 10), 2),
+    baseR: parseInt(insBin.substring(7, 10), 2),
+    bitImm5: parseInt(insBin.substring(10, 11), 2),
+    imm5: binarioC2ADecimal(insBin.substring(11, 16)),
+    sr2: parseInt(insBin.substring(13, 16), 2),
+    PCoffset9: binarioC2ADecimal(insBin.substring(7, 16)),
+    PCoffset11: binarioC2ADecimal(insBin.substring(5, 16)),
+    n: insBin[4],
+    z: insBin[5],
+    p: insBin[6],
+    offset6: binarioC2ADecimal(insBin.substring(10, 16))
+  }
 
   registros.value = registros.value.map((i) => hexadecimalADecimalConSigno(i))
-  
 
-  if (pc.value > 65536) 
-    pc.value = 65536
+  if (pc.value > 16384) 
+    pc.value = 16384
   else 
     {
       pc.value++
-      desplazamiento.value = pc.value -5
+      desplazamiento.value = pc.value > 0 && pc.value<3? pc.value -3 : pc.value - 3
     }
 
-  switch (opcode) {
+  switch (ins.opcode) {
     case "0001": //add
-      registros.value[dr] = registros.value[sr1] + (bitImm5 === 0 ? registros.value[sr2] : imm5);
-      console.log(registros.value[dr]);
+      registros.value[ins.dr] = registros.value[ins.sr1] + (ins.bitImm5 === 0 ? registros.value[ins.sr2] : ins.imm5);
+      console.log(registros.value[ins.dr]);
       
-      signo.value = Math.sign(registros.value[dr]);
+      signo.value = Math.sign(registros.value[ins.dr]);
       break;
     case "0101": //and
-      registros.value[dr] = registros.value[sr1] & (bitImm5 === 0 ? registros.value[sr2] : imm5);
-      signo.value = Math.sign(registros.value[dr]);
+      registros.value[ins.dr] = registros.value[ins.sr1] & (ins.bitImm5 === 0 ? registros.value[ins.sr2] : ins.imm5);
+      signo.value = Math.sign(registros.value[ins.dr]);
       break;
     case "1001": //not
-      registros.value[dr] = ~registros.value[sr1];
-      signo.value = Math.sign(registros.value[dr]);
+      registros.value[ins.dr] = ~registros.value[ins.sr1];
+      signo.value = Math.sign(registros.value[ins.dr]);
       break;
     case "0000": //br
       if (
-        (n === "1" && signo.value === -1) ||
-        (z === "1" && signo.value === 0) ||
-        (p === "1" && signo.value === 1)
+        (ins.n === "1" && signo.value === -1) ||
+        (ins.z === "1" && signo.value === 0) ||
+        (ins.p === "1" && signo.value === 1)
       )
-        pc.value = pc.value + PCoffset9;
+        pc.value = pc.value + ins.PCoffset9;
       break;
     case "1100": //jmp ret
-      pc.value = registros.value[baseR];
+      pc.value = registros.value[ins.baseR];
       break;
     case "0100": //jsr jsrr
       let temp = pc.value;
       pc.value =
         parseInt(insBin.substring(4, 5), 2) === 0
-          ? registros.value[baseR]
-          : pc.value + PCoffset11;
+          ? registros.value[ins.baseR]
+          : pc.value + ins.PCoffset11;
       registros.value[7] = temp;
       break;
     case "0010": //ld
-      registros.value[dr] = memoriaRam.value[pc.value + PCoffset9];
+      registros.value[ins.dr] = memoriaRam.value[pc.value + ins.PCoffset9];
       break;
     case "1010": //ldi
-      registros.value[dr] = memoriaRam.value[memoriaRam.value[pc.value + PCoffset9]];
+      registros.value[ins.dr] = memoriaRam.value[memoriaRam.value[pc.value + ins.PCoffset9]];
       break;
     case "0110": //ldr
-      registros.value[dr] = memoriaRam.value[registros.value[baseR] + offset6];
+      registros.value[ins.dr] = memoriaRam.value[registros.value[ins.baseR] + ins.offset6];
       break;
     case "1110": //lea
-      registros.value[dr] = pc.value + PCoffset9;
+      registros.value[ins.dr] = pc.value + ins.PCoffset9;
       break;
     case "0011": //st
-      memoriaRam.value[pc.value + PCoffset9] = registros.value[sr];
+      memoriaRam.value[pc.value + ins.PCoffset9] = registros.value[ins.sr];
       break;
     case "1011": //sti
-      memoriaRam.value[memoriaRam.value[pc.value + PCoffset9]] = registros.value[sr];
+      memoriaRam.value[memoriaRam.value[pc.value + ins.PCoffset9]] = registros.value[ins.sr];
       break;
     case "0111": //str
-      memoriaRam.value[registros.value[baseR] + offset6] = registros.value[sr];
+      memoriaRam.value[registros.value[ins.baseR] + ins.offset6] = registros.value[ins.sr];
       break;
 
     default:
@@ -253,7 +255,7 @@ function* DecimalSignoAHexaGenerator1(decimal) {
             <span class="input-group-text">Iniciar en X: </span>
             <input v-model="inicio" type="text" class="form-control" />
           </div>
-          <button type="submit" class="btn btn-warning">Cargar a memoria ⤴</button>
+          <button type="submit" class="btn btn-primary">Cargar a memoria ⤴</button>
           <textarea
             v-model="insTextoHexa.texto"
             class="numbered"
@@ -274,12 +276,11 @@ function* DecimalSignoAHexaGenerator1(decimal) {
 
       <div class="col-4">
         <h4>Memoria RAM {{ memoriaRam.length }}</h4>
-
         <div class="row justify-content-between">
           <button @click="limpiarMemoria" type="button" class="col btn btn-danger m-2">
             Limpiar memoria
           </button>
-          <button @click="pc = hexadecimalADecimalConSigno(inicio); desplazamiento = pc - 5 " type="button" class="col btn btn-danger m-2">
+          <button @click="pc = hexadecimalADecimalConSigno(inicio); desplazamiento = pc < 3 ? pc :pc - 3 " type="button" class="col btn btn-danger m-2">
             Reiniciar PC
           </button>
           <button @click="recorrer" type="button" class="col btn btn-primary m-2">
@@ -289,6 +290,12 @@ function* DecimalSignoAHexaGenerator1(decimal) {
             <input class="form-control" placeholder="Leave a comment here" id="floatingTextarea">
             <label for="floatingTextarea" > 🔍 X (en desarrollo)</label>
           </div>
+          <button @click="desplazamiento++" type="button" class="col btn btn-primary m-2">
+            ↓
+          </button>
+          <button @click="desplazamiento--" type="button" class="col btn btn-primary m-2">
+            ↑
+          </button>
         </div>
 
         <table class="table table-hover">
@@ -304,7 +311,7 @@ function* DecimalSignoAHexaGenerator1(decimal) {
               @click="pc = index"
               v-for="(item, index) in DecimalAHexaGenerator(memoriaRam)"
               :class="[pc == index ? 'table-primary' : 'table-ligth']"
-              v-show="(desplazamiento <= index) && (index<=desplazamiento+9)"
+              v-show="(desplazamiento <= index) && (index<=desplazamiento+7)"
             >
               <td>x{{ DecimalAHexaGenerator1(index).next().value }}</td>
               <td>x{{ item }}</td>
@@ -314,44 +321,10 @@ function* DecimalSignoAHexaGenerator1(decimal) {
       </div>
 
       <div class="col-3">
-        <div class="d-grid gap-2">
-          <h4>Banco de Registros en Hexadecimal</h4>
-          <button v-on:click="limpiarRegistros()" type="button" class="btn btn-danger">
-            Reiniciar registros
-          </button>
-          <div class="input-group input-group-lg">
-            <span class="input-group-text">R0</span>
-            <input v-model="registros[0]" type="text" class="form-control" />
-          </div>
-          <div class="input-group input-group-lg">
-            <span class="input-group-text">R1</span>
-            <input v-model="registros[1]" type="text" class="form-control" />
-          </div>
-          <div class="input-group input-group-lg">
-            <span class="input-group-text">R2</span>
-            <input v-model="registros[2]" type="text" class="form-control" />
-          </div>
-          <div class="input-group input-group-lg">
-            <span class="input-group-text">R3</span>
-            <input v-model="registros[3]" type="text" class="form-control" />
-          </div>
-          <div class="input-group input-group-lg">
-            <span class="input-group-text">R4</span>
-            <input v-model="registros[4]" type="text" class="form-control" />
-          </div>
-          <div class="input-group input-group-lg">
-            <span class="input-group-text">R5</span>
-            <input v-model="registros[5]" type="text" class="form-control" />
-          </div>
-          <div class="input-group input-group-lg">
-            <span class="input-group-text">R6</span>
-            <input v-model="registros[6]" type="text" class="form-control" />
-          </div>
-          <div class="input-group input-group-lg">
-            <span class="input-group-text">R7</span>
-            <input v-model="registros[7]" type="text" class="form-control" />
-          </div>
-        </div>
+        <Registros 
+          :registros="registros"
+          @limpiarRegistros = "limpiarRegistros"
+        />
       </div>
     </div>
   </div>
