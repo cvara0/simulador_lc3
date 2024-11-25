@@ -71,9 +71,10 @@ const cargar = () => {
 };
 // ajustar limite del pc
 ///////////////////////////////////////////////////////////////////////////////////
-const recorrer = () => {
+const recorrer = computed(() => {
   let insBin = memoriaRam.value[pc.value].toString(2).padStart(16, '0') 
-
+  console.log(insBin);
+  
   let opcode = insBin.substring(0, 4);
   let dr = parseInt(insBin.substring(4, 7), 2); //convierte de binario a entero
   let sr = dr;
@@ -89,7 +90,7 @@ const recorrer = () => {
   let p = insBin.substring(6, 7);
   let offset6 = binarioC2ADecimal(insBin.substring(10, 16));
 
-  registros.value = registros.value.map((i) => hexadecimalADecimalConSigno(i))//mejorar con generador
+  registros.value = registros.value.map((i) => hexadecimalADecimalConSigno(i))
   
 
   if (pc.value > 65536) 
@@ -112,7 +113,7 @@ const recorrer = () => {
       signo.value = Math.sign(registros.value[dr]);
       break;
     case "1001": //not
-      registros.value[dr] = ~registros.value[sr];
+      registros.value[dr] = ~registros.value[sr1];
       signo.value = Math.sign(registros.value[dr]);
       break;
     case "0000": //br
@@ -160,8 +161,12 @@ const recorrer = () => {
       break;
   }
 
-  registros.value = registros.value.map((i) => decimalASignoHexadecimal(i));
-};
+  registros.value = registros.value.map((i) => DecimalSignoAHexaGenerator1(i).next().value);
+});
+
+////////////////////////////////////////////////////////////////////////////////
+
+
 
 ///////////////////////////////////////////////////////////////////////
 function binarioC2ADecimal(binario) {
@@ -220,6 +225,15 @@ function* DecimalAHexaGenerator(array) {
     yield decimal.toString(16).padStart(4, '0'); // Convierte cada elemento binario a decimal 
 }
 
+function* DecimalSignoAHexaGenerator1(decimal) {
+  if (decimal < 0) {
+    const hexValue = (Math.pow(2, 16) + decimal).toString(16).toUpperCase();
+    yield hexValue;
+  } else {
+    const hexValue = decimal.toString(16).toUpperCase().padStart(4, '0');
+    yield hexValue;
+  }
+}
 
 ///////////////////////////////////////////////////////////////////////
 
