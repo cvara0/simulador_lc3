@@ -1,10 +1,10 @@
 <script setup>
 import { ref, reactive, onMounted, onBeforeUnmount, computed,onUnmounted } from "vue";
-import { memoriaArray } from "./data/memoriaRam.js";
+
 import { RecycleScroller } from "vue-virtual-scroller";
 
 const registros = ref([]);
-const memoriaRam = ref([]);
+const memoriaRam = ref('');
 const errores = ref([]);
 const signo = ref("");
 const insTextoHexa = reactive({
@@ -15,7 +15,7 @@ const limites = reactive({
   sup: 11,
 });
 const listaInsHexa = ref([]);
-const inicio = ref("0");
+const inicio = ref("3000");
 const desplazamiento = ref(0);
 const pc = ref(0);
 
@@ -63,7 +63,7 @@ const cargar = () => {
     listaInsHexa.value = lineas.map((i) => i.toUpperCase())
 
     listaInsHexa.value.forEach((valor, i) => {
-      memoriaRam.value[ini + i] = valor;
+      memoriaRam.value[ini + i] = parseInt(valor, 16)
     })
     pc.value = ini
     desplazamiento.value = ini - 5 
@@ -72,7 +72,7 @@ const cargar = () => {
 // ajustar limite del pc
 ///////////////////////////////////////////////////////////////////////////////////
 const recorrer = () => {
-  let insBin = parseInt(memoriaRam.value[pc.value], 16).toString(2).padStart(16, "0"); //de hexa  abinario y rellena con 0
+  let insBin = memoriaRam.value[pc.value].toString(2).padStart(16, '0') 
 
   let opcode = insBin.substring(0, 4);
   let dr = parseInt(insBin.substring(4, 7), 2); //convierte de binario a entero
@@ -89,8 +89,9 @@ const recorrer = () => {
   let p = insBin.substring(6, 7);
   let offset6 = binarioC2ADecimal(insBin.substring(10, 16));
 
-  registros.value = registros.value.map((i) => hexadecimalADecimalConSigno(i));//mejorar
-  memoriaRam.value = memoriaRam.value.map((i) => hexadecimalADecimalConSigno(i));
+  registros.value = registros.value.map((i) => hexadecimalADecimalConSigno(i))//mejorar con generador
+  
+
   if (pc.value > 65536) 
     pc.value = 65536
   else 
@@ -160,7 +161,6 @@ const recorrer = () => {
   }
 
   registros.value = registros.value.map((i) => decimalASignoHexadecimal(i));
-  memoriaRam.value = memoriaRam.value.map((i) => decimalASignoHexadecimal(i));
 };
 
 ///////////////////////////////////////////////////////////////////////
@@ -204,11 +204,22 @@ function hexadecimalADecimalConSigno(hex) {
 }
 
 const limpiarMemoria = () => {
-  memoriaRam.value = new Array(65536)
+  memoriaRam.value = new Int32Array(65536)
 };
 const limpiarRegistros = () => {
   registros.value = new Array(8).fill(0);
 };
+////////////////////////////////////////////////////////////////////////////////
+function* DecimalAHexaGenerator(array) {
+  for (const decimal of array) {
+    yield decimal.toString(16).padStart(4, '0'); // Convierte cada elemento binario a decimal
+  }
+}
+
+  function* DecimalAHexaGenerator1(decimal) {
+    yield decimal.toString(16).padStart(4, '0'); // Convierte cada elemento binario a decimal 
+}
+
 
 ///////////////////////////////////////////////////////////////////////
 
@@ -271,20 +282,20 @@ const limpiarRegistros = () => {
         <table class="table table-hover">
           <thead>
             <tr>
-              <th scope="col">Direccion de Memoria</th>
-              <th scope="col">Contenido en Hexadecimal</th>
+              <th scope="col">Dirección</th>
+              <th scope="col">Contenido</th>
               <!--<th scope="col">Contenido en Assembly</th>-->
             </tr>
           </thead>
           <tbody>
             <tr
               @click="pc = index"
-              v-for="(item, index) in memoriaRam"
+              v-for="(item, index) in DecimalAHexaGenerator(memoriaRam)"
               :class="[pc == index ? 'table-primary' : 'table-ligth']"
-              v-show="(desplazamiento <= index) && (index<desplazamiento+11)"
+              v-show="(desplazamiento <= index) && (index<=desplazamiento+11)"
             >
-              <td>x{{ decimalASignoHexadecimal(index).padStart(4, "0") }}</td>
-              <td>{{ item }}</td>
+              <td>x{{ DecimalAHexaGenerator1(index).next().value }}</td>
+              <td>x{{ item }}</td>
             </tr>
           </tbody>
         </table>
