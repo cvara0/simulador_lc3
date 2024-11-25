@@ -1,29 +1,26 @@
 <script setup>
-import { ref, reactive, onMounted, onBeforeUnmount, computed,onUnmounted } from "vue";
-
-import { RecycleScroller } from "vue-virtual-scroller";
+import { ref, reactive, onMounted, computed,onUnmounted } from "vue";
 
 const registros = ref([]);
 const memoriaRam = ref('');
 const errores = ref([]);
 const signo = ref("");
 const insTextoHexa = reactive({
-  texto: "",
+  texto:`1265
+14A3
+1642
+5642
+5664
+96FF
+33FF`,
 });
-const limites = reactive({
-  inf: 0,
-  sup: 11,
-});
+
 const listaInsHexa = ref([]);
 const inicio = ref("3000");
 const desplazamiento = ref(0);
 const pc = ref(0);
 
-const mostrar = ref(true);
-
-const scrollY = ref(0);
-const showRows = ref(false);
-const scrollContainer = ref(null);
+const scrollDelta = ref(0);
 
 onMounted(() => {
   limpiarMemoria();
@@ -31,7 +28,10 @@ onMounted(() => {
   window.addEventListener('wheel', handleWheel);
 });
 
-const scrollDelta = ref(0);
+onUnmounted(() => {
+      window.removeEventListener('wheel', handleWheel)
+    });
+
 
 const handleWheel = (event) => {
       scrollDelta.value = event.deltaY
@@ -43,13 +43,12 @@ const handleWheel = (event) => {
       desplazamiento.value = desplazamiento.value <= 0 ? 0 : desplazamiento.value > 65526 ? 65526 : desplazamiento.value
     };
 
-onUnmounted(() => {
-      window.removeEventListener('wheel', handleWheel)
-    });
+
 
 ///////////////////////////////////////////////////////////////////////////////
 const cargar = () => {
   let ini = hexadecimalADecimalConSigno(inicio.value);
+  
   const lineas = insTextoHexa.texto
     .trim()
     .split("\n")
@@ -60,18 +59,17 @@ const cargar = () => {
     .filter((r) => !r.valida)
 
   if (errores.value.length === 0) {
-    listaInsHexa.value = lineas.map((i) => i.toUpperCase())
-
-    listaInsHexa.value.forEach((valor, i) => {
+    lineas.forEach((valor, i) => {
       memoriaRam.value[ini + i] = parseInt(valor, 16)
     })
     pc.value = ini
     desplazamiento.value = ini - 5 
   }
 };
-// ajustar limite del pc
+
 ///////////////////////////////////////////////////////////////////////////////////
 const recorrer = computed(() => {
+  
   let insBin = memoriaRam.value[pc.value].toString(2).padStart(16, '0') 
   console.log(insBin);
   
@@ -103,13 +101,13 @@ const recorrer = computed(() => {
 
   switch (opcode) {
     case "0001": //add
-      registros.value[dr] =
-        registros.value[sr1] + (bitImm5 === 0 ? registros.value[sr2] : imm5);
+      registros.value[dr] = registros.value[sr1] + (bitImm5 === 0 ? registros.value[sr2] : imm5);
+      console.log(registros.value[dr]);
+      
       signo.value = Math.sign(registros.value[dr]);
       break;
     case "0101": //and
-      registros.value[dr] =
-        registros.value[sr1] & (bitImm5 === 0 ? registros.value[sr2] : imm5);
+      registros.value[dr] = registros.value[sr1] & (bitImm5 === 0 ? registros.value[sr2] : imm5);
       signo.value = Math.sign(registros.value[dr]);
       break;
     case "1001": //not
@@ -212,7 +210,7 @@ const limpiarMemoria = () => {
   memoriaRam.value = new Int32Array(16384)
 };
 const limpiarRegistros = () => {
-  registros.value = [];
+  registros.value = new Array(8).fill("0000")
 };
 ////////////////////////////////////////////////////////////////////////////////
 function* DecimalAHexaGenerator(array) {
@@ -260,7 +258,7 @@ function* DecimalSignoAHexaGenerator1(decimal) {
             v-model="insTextoHexa.texto"
             class="numbered"
             style="height: 400px"
-          ></textarea>
+          > </textarea>
         </form>
 
         <div v-if="errores.length > 0" class="mt-2">
@@ -306,7 +304,7 @@ function* DecimalSignoAHexaGenerator1(decimal) {
               @click="pc = index"
               v-for="(item, index) in DecimalAHexaGenerator(memoriaRam)"
               :class="[pc == index ? 'table-primary' : 'table-ligth']"
-              v-show="(desplazamiento <= index) && (index<=desplazamiento+11)"
+              v-show="(desplazamiento <= index) && (index<=desplazamiento+9)"
             >
               <td>x{{ DecimalAHexaGenerator1(index).next().value }}</td>
               <td>x{{ item }}</td>
