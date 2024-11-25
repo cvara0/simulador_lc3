@@ -44,7 +44,7 @@ const handleWheel = (event) => {
     };
 
 onUnmounted(() => {
-      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('wheel', handleWheel)
     });
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -53,18 +53,20 @@ const cargar = () => {
   const lineas = insTextoHexa.texto
     .trim()
     .split("\n")
-    .map((linea) => linea.trim());
+    .map((linea) => linea.trim())
+ 
   errores.value = lineas
     .map((linea, index) => ({ linea: index + 1, valida: /^[0-9A-Fa-f]{4}$/.test(linea) }))
-    .filter((r) => !r.valida);
+    .filter((r) => !r.valida)
 
   if (errores.value.length === 0) {
-    listaInsHexa.value = lineas.map((i) => i.toUpperCase());
+    listaInsHexa.value = lineas.map((i) => i.toUpperCase())
 
     listaInsHexa.value.forEach((valor, i) => {
       memoriaRam.value[ini + i] = valor;
-    });
-    pc.value = ini;
+    })
+    pc.value = ini
+    desplazamiento.value = ini - 5 
   }
 };
 // ajustar limite del pc
@@ -87,10 +89,15 @@ const recorrer = () => {
   let p = insBin.substring(6, 7);
   let offset6 = binarioC2ADecimal(insBin.substring(10, 16));
 
-  registros.value = registros.value.map((i) => hexadecimalADecimalConSigno(i));
+  registros.value = registros.value.map((i) => hexadecimalADecimalConSigno(i));//mejorar
   memoriaRam.value = memoriaRam.value.map((i) => hexadecimalADecimalConSigno(i));
-  if (pc.value > 65536) pc.value = 65536;
-  else pc.value++;
+  if (pc.value > 65536) 
+    pc.value = 65536
+  else 
+    {
+      pc.value++
+      desplazamiento.value = pc.value -5
+    }
 
   switch (opcode) {
     case "0001": //add
@@ -197,7 +204,7 @@ function hexadecimalADecimalConSigno(hex) {
 }
 
 const limpiarMemoria = () => {
-  memoriaRam.value = new Uint16Array(65536)
+  memoriaRam.value = new Array(65536)
 };
 const limpiarRegistros = () => {
   registros.value = new Array(8).fill(0);
@@ -220,7 +227,7 @@ const limpiarRegistros = () => {
 
         <form @submit.prevent="cargar" class="form-floating d-grid gap-2">
           <div class="input-group input-group">
-            <span class="input-group-text">Iniciar en: </span>
+            <span class="input-group-text">Iniciar en X: </span>
             <input v-model="inicio" type="text" class="form-control" />
           </div>
           <button type="submit" class="btn btn-warning">Cargar a memoria ⤴</button>
@@ -243,17 +250,17 @@ const limpiarRegistros = () => {
       </div>
 
       <div class="col-4">
-        <h4>Memoria RAM</h4>
+        <h4>Memoria RAM {{ memoriaRam.length }}</h4>
 
         <div class="row justify-content-between">
           <button @click="limpiarMemoria" type="button" class="col btn btn-danger m-2">
             Limpiar memoria
           </button>
-          <button @click="pc = 0" type="button" class="col btn btn-danger m-2">
+          <button @click="pc = hexadecimalADecimalConSigno(inicio); desplazamiento = pc - 5 " type="button" class="col btn btn-danger m-2">
             Reiniciar PC
           </button>
           <button @click="recorrer" type="button" class="col btn btn-primary m-2">
-            Recorrer PC: {{ pc }} ⤵
+            Recorrer PC: X{{ decimalASignoHexadecimal(pc).padStart(4, "0") }} ⤵
           </button>
           <div class="form-floating">
             <input class="form-control" placeholder="Leave a comment here" id="floatingTextarea">
@@ -274,7 +281,7 @@ const limpiarRegistros = () => {
               @click="pc = index"
               v-for="(item, index) in memoriaRam"
               :class="[pc == index ? 'table-primary' : 'table-ligth']"
-              v-show="(desplazamiento <= index) && (index<desplazamiento+10)"
+              v-show="(desplazamiento <= index) && (index<desplazamiento+11)"
             >
               <td>x{{ decimalASignoHexadecimal(index).padStart(4, "0") }}</td>
               <td>{{ item }}</td>
