@@ -235,12 +235,12 @@ const buscar = computed(() => console.log("buscando") )
 ////////////////////////////////////////////////////////////////////////////////
 function* DecimalAHexaGenerator(array) {
   for (const decimal of array) {
-    yield decimal.toString(16).padStart(4, '0'); // Convierte cada elemento binario a decimal
+    yield decimal.toString(16).toUpperCase().padStart(4, '0'); 
   }
 }
 
   function* DecimalAHexaGenerator1(decimal) {
-    yield decimal.toString(16).padStart(4, '0'); // Convierte cada elemento binario a decimal 
+    yield decimal.toString(16).padStart(4, '0')
 }
 
 function* DecimalSignoAHexaGenerator1(decimal) {
@@ -271,7 +271,7 @@ function* DecimalSignoAHexaGenerator1(decimal) {
         <form @submit.prevent="cargar" class="form-floating d-grid gap-2">
           <div class="input-group input-group">
             <span class="input-group-text">Iniciar en X: </span>
-            <input v-model="inicio" type="text" class="form-control" />
+            <input v-model="inicio" type="text" class="form-control" maxlength="4"/>
           </div>
           <button type="submit" class="btn btn-primary">Cargar a memoria ⤴</button>
           <textarea
@@ -307,7 +307,7 @@ function* DecimalSignoAHexaGenerator1(decimal) {
     
           <div class="input-group mb-3">
             <span class="input-group-text" id="inputGroup-sizing-default"> 🔍Buscar dirección: x</span>
-            <input v-model="aBuscar" type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+            <input v-model="aBuscar" type="text" maxlength="4" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
           </div>
           <button @click="desplazamiento++" type="button" class="col btn btn-primary m-2">
             ↓
@@ -339,7 +339,7 @@ function* DecimalSignoAHexaGenerator1(decimal) {
         </table>
       </div>
 
-      <div class="col-3">
+      <div class="col-2">
         <Registros 
           :registros="registros"
           @limpiarRegistros = "limpiarRegistros"
