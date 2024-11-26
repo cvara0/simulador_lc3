@@ -300,12 +300,13 @@ const iniciarEdicion = (index) => {
             <input v-model="inicio" maxlength="4" type="text" class="form-control" id="floatingInput" placeholder="name@example.com">
             <label for="floatingInput">Dirección de inicio:</label>
           </div>
-          <button type="submit" class="btn btn-primary">Cargar a memoria ⤴</button>
+          
           <textarea
             v-model="insTextoHexa.texto"
             class="numbered"
             style="height: 400px"
           > </textarea>
+          <button type="submit" class="btn btn-primary">Cargar a memoria ⤴</button>
         </form>
 
         <div v-if="errores.length > 0" class="mt-2">
@@ -328,9 +329,7 @@ const iniciarEdicion = (index) => {
           <button @click="reiniciarPc" type="button" class="col btn btn-danger m-2">
             Reiniciar PC
           </button>
-          <button @click="recorrer" :disabled="errorIns" type="button" class="col btn btn-primary m-2">
-            Recorrer PC: x{{ indiceRecorrer }} ⤵
-          </button>
+  
     
           <div class="form-floating mb-2">
             <input v-model="aBuscar" type="text" maxlength="4" class="form-control" id="floatingInput" placeholder="name@example.com">
@@ -383,7 +382,11 @@ const iniciarEdicion = (index) => {
           <button @click="desplazamiento--" type="button" class="col btn btn-primary m-2">
             ↑
           </button>
+  
         </div>
+        <button @click="recorrer" :disabled="errorIns" type="button" class="col btn btn-primary m-2">
+            Recorrer PC: x{{ indiceRecorrer }} ⤵
+          </button>
         
       </div>
 
