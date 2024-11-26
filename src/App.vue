@@ -262,9 +262,9 @@ function* DecimalSignoAHexaGenerator1(decimal) {
   <h5>Laboratorio 5</h5>
   <h1>Simulador de ISA de la LC3</h1>
   <h5>(Basado en el laboratorio 2)</h5>
-  <div class="container mt-5">
+  <div class="container mt-3" >
     <div class="row justify-content-center">
-      <div class="col-2">
+      <div class="col-12 col-sm-4 col-md-4 col-lg-3 col-xl-2	col-xxl-2">
         <h4 class="mt-4">Instrucciones en Hexadecimal</h4>
 
         <form @submit.prevent="cargar" class="form-floating d-grid gap-2">
@@ -291,7 +291,7 @@ function* DecimalSignoAHexaGenerator1(decimal) {
         </div>
       </div>
 
-      <div class="col-3">
+      <div class="col-12 col-sm-4 col-md-4 col-lg-3 col-xl-3	col-xxl-3">
         <h4>Memoria RAM {{ memoriaRam.length }}</h4>
         <div class="row justify-content-between">
           <button @click="limpiarMemoria" type="button" class="col btn btn-danger m-2">
@@ -305,7 +305,7 @@ function* DecimalSignoAHexaGenerator1(decimal) {
           </button>
     
           <div class="input-group">
-            <span class="input-group-text" id="inputGroup-sizing-default"> 🔍Buscar dirección: x</span>
+            <span class="input-group-text" id="inputGroup-sizing-default"> 🔍: x</span>
             <input v-model="aBuscar" type="text" maxlength="4" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
           </div>
   
@@ -342,7 +342,7 @@ function* DecimalSignoAHexaGenerator1(decimal) {
         
       </div>
 
-      <div class="col-2">
+      <div class="col-12 col-sm-4 col-md-4 col-lg-3 col-xl-2	col-xxl-2">
         <Registros 
           :registros="registros"
           @limpiarRegistros = "limpiarRegistros"
