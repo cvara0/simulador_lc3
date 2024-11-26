@@ -308,12 +308,7 @@ function* DecimalSignoAHexaGenerator1(decimal) {
             <span class="input-group-text" id="inputGroup-sizing-default"> 🔍Buscar dirección: x</span>
             <input v-model="aBuscar" type="text" maxlength="4" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
           </div>
-          <button @click="desplazamiento++" type="button" class="col btn btn-primary m-2">
-            ↓
-          </button>
-          <button @click="desplazamiento--" type="button" class="col btn btn-primary m-2">
-            ↑
-          </button>
+  
         </div>
 
         <table class="table table-hover">
@@ -336,6 +331,15 @@ function* DecimalSignoAHexaGenerator1(decimal) {
             </tr>
           </tbody>
         </table>
+        <div class="row justify-content-between">
+          <button @click="desplazamiento++" type="button" class="col btn btn-primary m-2">
+            ↓
+          </button>
+          <button @click="desplazamiento--" type="button" class="col btn btn-primary m-2">
+            ↑
+          </button>
+        </div>
+        
       </div>
 
       <div class="col-2">
