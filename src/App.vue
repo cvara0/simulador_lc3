@@ -263,8 +263,8 @@ function* DecimalSignoAHexaGenerator1(decimal) {
   <h1>Simulador de ISA de la LC3</h1>
   <h5>(Basado en el laboratorio 2)</h5>
   <div class="container mt-5">
-    <div class="row">
-      <div class="col-4">
+    <div class="row justify-content-center">
+      <div class="col-2">
         <h4 class="mt-4">Instrucciones en Hexadecimal</h4>
 
         <form @submit.prevent="cargar" class="form-floating d-grid gap-2">
@@ -291,7 +291,7 @@ function* DecimalSignoAHexaGenerator1(decimal) {
         </div>
       </div>
 
-      <div class="col-4">
+      <div class="col-3">
         <h4>Memoria RAM {{ memoriaRam.length }}</h4>
         <div class="row justify-content-between">
           <button @click="limpiarMemoria" type="button" class="col btn btn-danger m-2">
