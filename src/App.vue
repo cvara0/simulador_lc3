@@ -19,8 +19,8 @@ const insTextoHexa = reactive({
 
 const listaInsHexa = ref([])
 const inicio = ref("3000")
-const desplazamiento = ref(0)
-const pc = ref(0)
+const desplazamiento = ref(12285)
+const pc = ref(12288)
 
 const scrollDelta = ref(0)
 
@@ -231,7 +231,6 @@ const reiniciarPc = computed(()=>{
 
 const indiceRecorrer = computed(() => decimalASignoHexadecimal(pc.value).padStart(4, "0") ) 
 
-const buscar = computed(() => console.log("buscando") )
 ////////////////////////////////////////////////////////////////////////////////
 function* DecimalAHexaGenerator(array) {
   for (const decimal of array) {
@@ -305,7 +304,7 @@ function* DecimalSignoAHexaGenerator1(decimal) {
             Recorrer PC: X{{ indiceRecorrer }} ⤵
           </button>
     
-          <div class="input-group mb-3">
+          <div class="input-group">
             <span class="input-group-text" id="inputGroup-sizing-default"> 🔍Buscar dirección: x</span>
             <input v-model="aBuscar" type="text" maxlength="4" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
           </div>
