@@ -1,11 +1,12 @@
 <script setup>
-import { ref, reactive, onMounted, computed,onUnmounted } from "vue";
-import Registros from "./components/Registros.vue";
+import { ref, reactive, onMounted, computed,onUnmounted, watch } from "vue"
+import Registros from "./components/Registros.vue"
 
-const registros = ref([]);
-const memoriaRam = ref('');
-const errores = ref([]);
-const signo = ref("");
+const registros = ref([])
+const memoriaRam = ref([])
+const aBuscar = ref('')
+const errores = ref([])
+const signo = ref("")
 const insTextoHexa = reactive({
   texto:`1265
 14A3
@@ -14,19 +15,19 @@ const insTextoHexa = reactive({
 5664
 96FF
 33FF`,
-});
+})
 
-const listaInsHexa = ref([]);
-const inicio = ref("3000");
-const desplazamiento = ref(0);
-const pc = ref(0);
+const listaInsHexa = ref([])
+const inicio = ref("3000")
+const desplazamiento = ref(0)
+const pc = ref(0)
 
-const scrollDelta = ref(0);
+const scrollDelta = ref(0)
 
 onMounted(() => {
-  limpiarMemoria();
-  limpiarRegistros();
-  window.addEventListener('wheel', handleWheel);
+  limpiarMemoria()
+  limpiarRegistros()
+  window.addEventListener('wheel', handleWheel)
 });
 
 onUnmounted(() => {
@@ -41,10 +42,15 @@ const handleWheel = (event) => {
       }else{
         desplazamiento.value--
       }
-      desplazamiento.value = desplazamiento.value <= 0 ? 0 : desplazamiento.value > 65526 ? 65526 : desplazamiento.value
+      desplazamiento.value = desplazamiento.value <= 0 ? 0 : desplazamiento.value > 16374 ? 16374 : desplazamiento.value
     };
 
-
+watch(aBuscar, ()=>{
+  if(aBuscar.value)
+      desplazamiento.value = hexadecimalADecimalConSigno(aBuscar.value)
+  else
+    desplazamiento.value = pc.value > 0 && pc.value<3? pc.value -3 : pc.value - 3 
+})
 
 ///////////////////////////////////////////////////////////////////////////////
 const cargar = () => {
@@ -122,10 +128,12 @@ const recorrer = computed(() => {
         (ins.z === "1" && signo.value === 0) ||
         (ins.p === "1" && signo.value === 1)
       )
-        pc.value = pc.value + ins.PCoffset9;
+        pc.value = pc.value + ins.PCoffset9
+        desplazamiento.value = pc.value > 0 && pc.value<3? pc.value -3 : pc.value - 3
       break;
     case "1100": //jmp ret
       pc.value = registros.value[ins.baseR];
+      desplazamiento.value = pc.value > 0 && pc.value<3? pc.value -3 : pc.value - 3
       break;
     case "0100": //jsr jsrr
       let temp = pc.value;
@@ -134,6 +142,7 @@ const recorrer = computed(() => {
           ? registros.value[ins.baseR]
           : pc.value + ins.PCoffset11;
       registros.value[7] = temp;
+      desplazamiento.value = pc.value > 0 && pc.value<3? pc.value -3 : pc.value - 3
       break;
     case "0010": //ld
       registros.value[ins.dr] = memoriaRam.value[pc.value + ins.PCoffset9];
@@ -222,6 +231,7 @@ const reiniciarPc = computed(()=>{
 
 const indiceRecorrer = computed(() => decimalASignoHexadecimal(pc.value).padStart(4, "0") ) 
 
+const buscar = computed(() => console.log("buscando") )
 ////////////////////////////////////////////////////////////////////////////////
 function* DecimalAHexaGenerator(array) {
   for (const decimal of array) {
@@ -294,9 +304,10 @@ function* DecimalSignoAHexaGenerator1(decimal) {
           <button @click="recorrer" type="button" class="col btn btn-primary m-2">
             Recorrer PC: X{{ indiceRecorrer }} ⤵
           </button>
-          <div class="form-floating">
-            <input class="form-control" placeholder="Leave a comment here" id="floatingTextarea">
-            <label for="floatingTextarea" > 🔍 X (en desarrollo)</label>
+    
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="inputGroup-sizing-default"> 🔍Buscar dirección: x</span>
+            <input v-model="aBuscar" type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
           </div>
           <button @click="desplazamiento++" type="button" class="col btn btn-primary m-2">
             ↓
