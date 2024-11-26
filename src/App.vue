@@ -6,7 +6,9 @@ const registros = ref([])
 const memoriaRam = ref([])
 const aBuscar = ref('')
 const errores = ref([])
+const errorIns = ref(false)
 const signo = ref("")
+const editando = ref([])
 const insTextoHexa = reactive({
   texto:`1265
 14A3
@@ -55,7 +57,7 @@ watch(aBuscar, ()=>{
 ///////////////////////////////////////////////////////////////////////////////
 const cargar = () => {
   let ini = hexadecimalADecimalConSigno(inicio.value);
-  
+  errorIns.value = false
   const lineas = insTextoHexa.texto
     .trim()
     .split("\n")
@@ -78,7 +80,7 @@ const cargar = () => {
 const recorrer = computed(() => {
   
   let insBin = memoriaRam.value[pc.value].toString(2).padStart(16, '0') 
-  console.log(insBin);
+  //console.log(insBin);
   
   const ins = {
     opcode: insBin.substring(0, 4),
@@ -165,8 +167,8 @@ const recorrer = computed(() => {
     case "0111": //str
       memoriaRam.value[registros.value[ins.baseR] + ins.offset6] = registros.value[ins.sr];
       break;
-
     default:
+      errorIns.value = true
       break;
   }
 
@@ -225,6 +227,7 @@ const limpiarRegistros = () => {
 }
 
 const reiniciarPc = computed(()=>{
+  errorIns.value = false
   pc.value = hexadecimalADecimalConSigno(inicio.value)
   desplazamiento.value = pc.value < 3 ? pc.value :pc.value - 3
 })
@@ -232,14 +235,18 @@ const reiniciarPc = computed(()=>{
 const indiceRecorrer = computed(() => decimalASignoHexadecimal(pc.value).padStart(4, "0") ) 
 
 ////////////////////////////////////////////////////////////////////////////////
+
+
 function* DecimalAHexaGenerator(array) {
   for (const decimal of array) {
     yield decimal.toString(16).toUpperCase().padStart(4, '0'); 
   }
 }
 
-  function* DecimalAHexaGenerator1(decimal) {
-    yield decimal.toString(16).padStart(4, '0')
+const ramDecimalAHexa1 = computed(() => decimalASignoHexadecimal(memoriaRam.value[pc.value-1]).padStart(4, '0'))
+  
+function* DecimalAHexaGenerator1(decimal) {
+    yield decimal.toString(16).padStart(4, '0').toUpperCase()
 }
 
 function* DecimalSignoAHexaGenerator1(decimal) {
@@ -253,8 +260,28 @@ function* DecimalSignoAHexaGenerator1(decimal) {
 }
 
 ///////////////////////////////////////////////////////////////////////
+const iniciarEdicion = (index) => {
+      editando.value[index] = true
+    }
 
+    const finalizarEdicion = (index) => {
+      editando.value[index] = false
+      errorIns.value = false
+    };
 
+    // Computed que transforma los valores de memoria a hexadecimal
+    const formattedMemory = computed(() =>
+      memoriaRam.value.map((value) =>
+        value.toString(16).padStart(4, "0").toUpperCase()
+      )
+    )
+
+    // Función para actualizar el valor en memoria
+    const updateMemory = (index, newValue) => {
+      // Convierte el valor hexadecimal a decimal antes de guardarlo
+      const decimalValue = parseInt(newValue, 16) || 0
+      memoriaRam.value[index] = decimalValue
+    }
 
 </script>
 
@@ -264,13 +291,14 @@ function* DecimalSignoAHexaGenerator1(decimal) {
   <h5>(Basado en el laboratorio 2)</h5>
   <div class="container mt-3" >
     <div class="row justify-content-center">
-      <div class="col-12 col-sm-4 col-md-4 col-lg-3 col-xl-2	col-xxl-2">
+      <div class="col-12 col-sm-12 col-md-5 col-lg-4 col-xl-4 col-xxl-4">
         <h4 class="mt-4">Instrucciones en Hexadecimal</h4>
 
         <form @submit.prevent="cargar" class="form-floating d-grid gap-2">
-          <div class="input-group input-group">
-            <span class="input-group-text">Iniciar en X: </span>
-            <input v-model="inicio" type="text" class="form-control" maxlength="4"/>
+
+          <div class="form-floating mb-2">
+            <input v-model="inicio" maxlength="4" type="text" class="form-control" id="floatingInput" placeholder="name@example.com">
+            <label for="floatingInput">Dirección de inicio:</label>
           </div>
           <button type="submit" class="btn btn-primary">Cargar a memoria ⤴</button>
           <textarea
@@ -287,11 +315,11 @@ function* DecimalSignoAHexaGenerator1(decimal) {
           </ul>
         </div>
         <div v-else class="mt-2">
-          <div class="alert alert-success" role="alert">👍</div>
+          <div class="alert alert-success" role="alert">Status: OK👍</div>
         </div>
       </div>
 
-      <div class="col-12 col-sm-4 col-md-4 col-lg-3 col-xl-3	col-xxl-3">
+      <div class="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-4	col-xxl-4">
         <h4>Memoria RAM {{ memoriaRam.length }}</h4>
         <div class="row justify-content-between">
           <button @click="limpiarMemoria" type="button" class="col btn btn-danger m-2">
@@ -300,17 +328,19 @@ function* DecimalSignoAHexaGenerator1(decimal) {
           <button @click="reiniciarPc" type="button" class="col btn btn-danger m-2">
             Reiniciar PC
           </button>
-          <button @click="recorrer" type="button" class="col btn btn-primary m-2">
-            Recorrer PC: X{{ indiceRecorrer }} ⤵
+          <button @click="recorrer" :disabled="errorIns" type="button" class="col btn btn-primary m-2">
+            Recorrer PC: x{{ indiceRecorrer }} ⤵
           </button>
     
-          <div class="input-group">
-            <span class="input-group-text" id="inputGroup-sizing-default"> 🔍: x</span>
-            <input v-model="aBuscar" type="text" maxlength="4" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+          <div class="form-floating mb-2">
+            <input v-model="aBuscar" type="text" maxlength="4" class="form-control" id="floatingInput" placeholder="name@example.com">
+            <label for="floatingInput">🔍Buscar dirección:</label>
           </div>
-  
         </div>
-
+        
+        <div v-show="errorIns" class="alert alert-danger" role="alert">
+            Instrucción no reconocida: "{{ ramDecimalAHexa1 }}" 
+        </div>
         <table class="table table-hover">
           <thead>
             <tr>
@@ -320,14 +350,29 @@ function* DecimalSignoAHexaGenerator1(decimal) {
             </tr>
           </thead>
           <tbody>
+            
             <tr
-              @click="pc = index"
               v-for="(item, index) in DecimalAHexaGenerator(memoriaRam)"
-              :class="[pc == index ? 'table-primary' : 'table-ligth']"
               v-show="(desplazamiento <= index) && (index<=desplazamiento+7)"
             >
-              <td>x{{ DecimalAHexaGenerator1(index).next().value }}</td>
-              <td>x{{ item }}</td>
+          
+              <td 
+                @click="pc = index" 
+                :class="[pc == index ? 'table-primary' : 'table-ligth']"
+                >
+                x{{ DecimalAHexaGenerator1(index).next().value}}
+              </td>
+              
+              <td v-if="editando[index]">
+                <input maxlength="4" :value="item.toString(16).toUpperCase().padStart(4, '0')" 
+                @input="updateMemory(index, $event.target.value)" type="text">
+                <input type="button" value="✅" @click="finalizarEdicion(index)">
+              </td>
+              <td v-else @click="iniciarEdicion(index)">
+                {{item}} 📝
+              </td>
+
+    
             </tr>
           </tbody>
         </table>
@@ -342,7 +387,7 @@ function* DecimalSignoAHexaGenerator1(decimal) {
         
       </div>
 
-      <div class="col-12 col-sm-4 col-md-4 col-lg-3 col-xl-2	col-xxl-2">
+      <div class="col-12 col-sm-6 col-md-1 col-lg-4 col-xl-4 col-xxl-4">
         <Registros 
           :registros="registros"
           @limpiarRegistros = "limpiarRegistros"
