@@ -7,16 +7,11 @@ const memoriaRam = ref([])
 const aBuscar = ref('')
 const errores = ref([])
 const errorIns = ref(false)
+const errorCarga = ref(false)
 const signo = ref("")
 const editando = ref([])
 const insTextoHexa = reactive({
-  texto:`1265
-14A3
-1642
-5642
-5664
-96FF
-33FF`,
+  texto:``,
 })
 
 const listaInsHexa = ref([])
@@ -73,6 +68,7 @@ const cargar = () => {
     })
     pc.value = ini
     desplazamiento.value = pc.value > 0 && pc.value<3? pc.value -2 : pc.value - 3
+   
   }
 };
 
@@ -315,8 +311,8 @@ const iniciarEdicion = (index) => {
             <li class="list-group-item">En linea {{ item.linea }}</li>
           </ul>
         </div>
-        <div v-else class="mt-2">
-          <div class="alert alert-success" role="alert">Status: OK👍</div>
+        <div v-else-if="memoriaRam.some((i) => i !== 0)" class="mt-2">
+          <div class="alert alert-success" role="alert">Carga OK👍</div>
         </div>
       </div>
 
