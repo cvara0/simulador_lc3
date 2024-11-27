@@ -102,7 +102,7 @@ const recorrer = computed(() => {
   else 
     {
       pc.value++
-      desplazamiento.value = pc.value >= 0 && pc.value < 3 ? pc.value : pc.value - 3
+      desplazamiento.value = pc.value - 3 //ver para 0000
     }
 
   switch (ins.opcode) {
