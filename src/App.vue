@@ -46,7 +46,7 @@ watch(aBuscar, ()=>{
   if(aBuscar.value)
       desplazamiento.value = hexadecimalADecimalConSigno(aBuscar.value)
   else
-    desplazamiento.value = pc.value > 0 && pc.value<3? pc.value -3 : pc.value - 3 
+    desplazamiento.value = pc.value - 3 
 })
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -67,7 +67,7 @@ const cargar = () => {
       memoriaRam.value[ini + i] = parseInt(valor, 16)
     })
     pc.value = ini
-    desplazamiento.value = pc.value >= 0 && pc.value<3? pc.value : pc.value - 3
+    desplazamiento.value = pc.value >= 0 && pc.value < 3 ? pc.value : pc.value - 3
    
   }
 };
@@ -102,7 +102,7 @@ const recorrer = computed(() => {
   else 
     {
       pc.value++
-      desplazamiento.value = pc.value >= 0 && pc.value<3? pc.value : pc.value - 3
+      desplazamiento.value = pc.value >= 0 && pc.value < 3 ? pc.value : pc.value - 3
     }
 
   switch (ins.opcode) {
@@ -127,11 +127,11 @@ const recorrer = computed(() => {
         (ins.p === "1" && signo.value === 1)
       )
         pc.value = pc.value + ins.PCoffset9
-        desplazamiento.value = pc.value >= 0 && pc.value<3? pc.value : pc.value - 3
+        desplazamiento.value = pc.value >= 0 && pc.value < 3 ? pc.value : pc.value - 3
       break;
     case "1100": //jmp ret
       pc.value = registros.value[ins.baseR];
-      desplazamiento.value = pc.value >= 0 && pc.value<3? pc.value : pc.value - 3
+      desplazamiento.value = pc.value >= 0 && pc.value < 3 ? pc.value : pc.value - 3
       break;
     case "0100": //jsr jsrr
       let temp = pc.value;
@@ -140,7 +140,7 @@ const recorrer = computed(() => {
           ? registros.value[ins.baseR]
           : pc.value + ins.PCoffset11;
       registros.value[7] = temp;
-      desplazamiento.value = pc.value >= 0 && pc.value<3? pc.value : pc.value - 3
+      desplazamiento.value = pc.value >= 0 && pc.value < 3 ? pc.value : pc.value - 3
       break;
     case "0010": //ld
       registros.value[ins.dr] = memoriaRam.value[pc.value + ins.PCoffset9];
@@ -241,11 +241,11 @@ function* DecimalAHexaGenerator(array) {
 
 const ramDecimalAHexa1 = computed(() => decimalASignoHexadecimal(memoriaRam.value[pc.value-1]).padStart(4, '0'))
   
-function* DecimalAHexaGenerator1(decimal) {
+function* DecimalAHexaGenerator1(decimal) { //ver
     yield decimal.toString(16).padStart(4, '0').toUpperCase()
 }
 
-function* DecimalSignoAHexaGenerator1(decimal) {
+function* DecimalSignoAHexaGenerator1(decimal) { //ver
   if (decimal < 0) {
     const hexValue = (Math.pow(2, 16) + decimal).toString(16).toUpperCase();
     yield hexValue;
