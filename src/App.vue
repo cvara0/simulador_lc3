@@ -25,11 +25,11 @@ onMounted(() => {
   limpiarMemoria()
   limpiarRegistros()
   window.addEventListener('wheel', handleWheel)
-});
+})
 
 onUnmounted(() => {
       window.removeEventListener('wheel', handleWheel)
-    });
+    })
 
 
 const handleWheel = (event) => {
@@ -40,7 +40,7 @@ const handleWheel = (event) => {
         desplazamiento.value--
       }
       desplazamiento.value = desplazamiento.value <= 0 ? 0 : desplazamiento.value > 16374 ? 16374 : desplazamiento.value
-    };
+    }
 
 watch(aBuscar, ()=>{
   if(aBuscar.value)
@@ -67,7 +67,7 @@ const cargar = () => {
       memoriaRam.value[ini + i] = parseInt(valor, 16)
     })
     pc.value = ini
-    desplazamiento.value = pc.value > 0 && pc.value<3? pc.value -2 : pc.value - 3
+    desplazamiento.value = pc.value >= 0 && pc.value<3? pc.value : pc.value - 3
    
   }
 };
@@ -102,7 +102,7 @@ const recorrer = computed(() => {
   else 
     {
       pc.value++
-      desplazamiento.value = pc.value > 0 && pc.value<3? pc.value -3 : pc.value - 3
+      desplazamiento.value = pc.value >= 0 && pc.value<3? pc.value : pc.value - 3
     }
 
   switch (ins.opcode) {
@@ -127,11 +127,11 @@ const recorrer = computed(() => {
         (ins.p === "1" && signo.value === 1)
       )
         pc.value = pc.value + ins.PCoffset9
-        desplazamiento.value = pc.value > 0 && pc.value<3? pc.value -3 : pc.value - 3
+        desplazamiento.value = pc.value >= 0 && pc.value<3? pc.value : pc.value - 3
       break;
     case "1100": //jmp ret
       pc.value = registros.value[ins.baseR];
-      desplazamiento.value = pc.value > 0 && pc.value<3? pc.value -3 : pc.value - 3
+      desplazamiento.value = pc.value >= 0 && pc.value<3? pc.value : pc.value - 3
       break;
     case "0100": //jsr jsrr
       let temp = pc.value;
@@ -140,7 +140,7 @@ const recorrer = computed(() => {
           ? registros.value[ins.baseR]
           : pc.value + ins.PCoffset11;
       registros.value[7] = temp;
-      desplazamiento.value = pc.value > 0 && pc.value<3? pc.value -3 : pc.value - 3
+      desplazamiento.value = pc.value >= 0 && pc.value<3? pc.value : pc.value - 3
       break;
     case "0010": //ld
       registros.value[ins.dr] = memoriaRam.value[pc.value + ins.PCoffset9];
@@ -260,20 +260,20 @@ const iniciarEdicion = (index) => {
       editando.value[index] = true
     }
 
-    const finalizarEdicion = (index) => {
+const finalizarEdicion = (index) => {
       editando.value[index] = false
       errorIns.value = false
     };
 
     // Computed que transforma los valores de memoria a hexadecimal
-    const formattedMemory = computed(() =>
+    /*const formattedMemory = computed(() =>
       memoriaRam.value.map((value) =>
         value.toString(16).padStart(4, "0").toUpperCase()
       )
-    )
+    )*/
 
     // Función para actualizar el valor en memoria
-    const updateMemory = (index, newValue) => {
+  const updateMemory = (index, newValue) => {
       // Convierte el valor hexadecimal a decimal antes de guardarlo
       const decimalValue = parseInt(newValue, 16) || 0
       memoriaRam.value[index] = decimalValue
@@ -284,7 +284,7 @@ const iniciarEdicion = (index) => {
 <template>
   <div class="animate__animated  animate__fadeInDown">
     <h5>Laboratorio 5</h5>
-    <h1>Simulador de ISA de la LC3</h1>
+    <h1>🖳Simulador de ISA de la LC3</h1>
     <h5>(Basado en el laboratorio 2)</h5>
   </div>
  
