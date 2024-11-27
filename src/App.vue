@@ -282,12 +282,15 @@ const iniciarEdicion = (index) => {
 </script>
 
 <template>
-  <h5>Laboratorio 5</h5>
-  <h1>Simulador de ISA de la LC3</h1>
-  <h5>(Basado en el laboratorio 2)</h5>
-  <div class="container mt-3" >
+  <div class="animate__animated  animate__fadeInDown">
+    <h5>Laboratorio 5</h5>
+    <h1>Simulador de ISA de la LC3</h1>
+    <h5>(Basado en el laboratorio 2)</h5>
+  </div>
+ 
+  <div class="container mt-3 animate__animated animate__fadeIn" >
     <div class="row justify-content-center">
-      <div class="col-12 col-sm-12 col-md-5 col-lg-4 col-xl-4 col-xxl-4">
+      <div class="col-12 col-sm-12 col-md-5 col-lg-4 col-xl-4 col-xxl-4 animate__animated animate__fadeInLeft">
         <h4 class="mt-4">Instrucciones en Hexadecimal</h4>
 
         <form @submit.prevent="cargar" class="form-floating d-grid gap-2">
@@ -316,7 +319,7 @@ const iniciarEdicion = (index) => {
         </div>
       </div>
 
-      <div class="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-4	col-xxl-4">
+      <div class="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-4	col-xxl-4  animate__animated animate__fadeInUp">
         <h4>Memoria RAM {{ memoriaRam.length }}</h4>
         <div class="row justify-content-between">
           <button @click="limpiarMemoria" type="button" class="col btn btn-danger m-2">
@@ -386,7 +389,7 @@ const iniciarEdicion = (index) => {
         
       </div>
 
-      <div class="col-12 col-sm-6 col-md-1 col-lg-4 col-xl-4 col-xxl-4">
+      <div class="col-12 col-sm-6 col-md-1 col-lg-4 col-xl-4 col-xxl-4 animate__animated animate__fadeInRight ">
         <Registros 
           :registros="registros"
           @limpiarRegistros = "limpiarRegistros"
