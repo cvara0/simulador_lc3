@@ -7,14 +7,12 @@ const memoriaRam = ref([])
 const aBuscar = ref('')
 const errores = ref([])
 const errorIns = ref(false)
-const errorCarga = ref(false)
 const signo = ref("")
-const editando = ref([])
+
 const insTextoHexa = reactive({
   texto:``,
 })
 
-const listaInsHexa = ref([])
 const inicio = ref("3000")
 const desplazamiento = ref(12285)
 const pc = ref(12288)
@@ -24,7 +22,7 @@ const scrollDelta = ref(0)
 onMounted(() => {
   limpiarMemoria()
   limpiarRegistros()
-  window.addEventListener('wheel', handleWheel)
+  //window.addEventListener('wheel', handleWheel)
 })
 
 onUnmounted(() => {
@@ -40,6 +38,7 @@ const handleWheel = (event) => {
         desplazamiento.value--
       }
       desplazamiento.value = desplazamiento.value <= 0 ? 0 : desplazamiento.value > 16374 ? 16374 : desplazamiento.value
+      event.preventDefault();
     }
 
 watch(aBuscar, ()=>{
@@ -73,10 +72,11 @@ const cargar = () => {
 };
 
 ///////////////////////////////////////////////////////////////////////////////////
-const recorrer = computed(() => {
+const recorrer = (esRecorrer) => {
   
   let insBin = memoriaRam.value[pc.value].toString(2).padStart(16, '0') 
   //console.log(insBin);
+  console.log(esRecorrer) //seguir con ejecutar todo
   
   const ins = {
     opcode: insBin.substring(0, 4),
@@ -108,8 +108,6 @@ const recorrer = computed(() => {
   switch (ins.opcode) {
     case "0001": //add
       registros.value[ins.dr] = registros.value[ins.sr1] + (ins.bitImm5 === 0 ? registros.value[ins.sr2] : ins.imm5);
-      console.log(registros.value[ins.dr]);
-      
       signo.value = Math.sign(registros.value[ins.dr]);
       break;
     case "0101": //and
@@ -169,7 +167,7 @@ const recorrer = computed(() => {
   }
 
   registros.value = registros.value.map((i) => DecimalSignoAHexaGenerator1(i).next().value);
-});
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -216,6 +214,7 @@ function hexadecimalADecimalConSigno(hex) {
 }
 
 const limpiarMemoria = () => {
+  errorIns.value = false
   memoriaRam.value = new Int32Array(16384)
 }
 const limpiarRegistros = () => {
@@ -241,9 +240,6 @@ function* DecimalAHexaGenerator(array) {
 
 const ramDecimalAHexa1 = computed(() => decimalASignoHexadecimal(memoriaRam.value[pc.value-1]).padStart(4, '0'))
   
-function* DecimalAHexaGenerator1(decimal) { //ver
-    yield decimal.toString(16).padStart(4, '0').toUpperCase()
-}
 
 function* DecimalSignoAHexaGenerator1(decimal) { //ver
   if (decimal < 0) {
@@ -256,28 +252,16 @@ function* DecimalSignoAHexaGenerator1(decimal) { //ver
 }
 
 ///////////////////////////////////////////////////////////////////////
-const iniciarEdicion = (index) => {
-      editando.value[index] = true
-    }
-
-const finalizarEdicion = (index) => {
-      editando.value[index] = false
-      errorIns.value = false
-    };
-
-    // Computed que transforma los valores de memoria a hexadecimal
-    /*const formattedMemory = computed(() =>
-      memoriaRam.value.map((value) =>
-        value.toString(16).padStart(4, "0").toUpperCase()
-      )
-    )*/
-
     // Función para actualizar el valor en memoria
   const updateMemory = (index, newValue) => {
       // Convierte el valor hexadecimal a decimal antes de guardarlo
       const decimalValue = parseInt(newValue, 16) || 0
       memoriaRam.value[index] = decimalValue
     }
+
+  function itemDecimalAHexa(item){
+    return item.toString(16).toUpperCase().padStart(4, '0')
+  }
 
 </script>
 
@@ -337,9 +321,9 @@ const finalizarEdicion = (index) => {
         </div>
         
         <div v-show="errorIns" class="alert alert-danger" role="alert">
-            Instrucción no reconocida: "{{ ramDecimalAHexa1 }}" 
+          ⛔ Instrucción no reconocida: "{{ ramDecimalAHexa1 }}" ⛔
         </div>
-        <table class="table table-hover">
+        <table @wheel="handleWheel" class="table table-hover">
           <thead>
             <tr>
               <th scope="col">Dirección</th>
@@ -350,43 +334,46 @@ const finalizarEdicion = (index) => {
           <tbody>
             
             <tr
-              v-for="(item, index) in DecimalAHexaGenerator(memoriaRam)"
+              v-for="(item, index) in memoriaRam"
               v-show="(desplazamiento <= index) && (index<=desplazamiento+7)"
             >
-          
               <td 
                 @click="pc = index" 
                 :class="[pc == index ? 'table-primary' : 'table-ligth']"
                 >
-                x{{ DecimalAHexaGenerator1(index).next().value}}
+                {{ itemDecimalAHexa(index)}}
               </td>
               
-              <td v-if="editando[index]">
-                <input maxlength="4" :value="item.toString(16).toUpperCase().padStart(4, '0')" 
-                @input="updateMemory(index, $event.target.value)" type="text">
-                <input type="button" value="✅" @click="finalizarEdicion(index)">
+              <td>
+                <input maxlength="4" :value="itemDecimalAHexa(item)" 
+                @input="updateMemory(index, $event.target.value)" type="text"
+                @focus="$event.target.select()"
+                style="width: 50px; text-align:center"
+                >
               </td>
-              <td v-else @click="iniciarEdicion(index)">
-                {{item}} 📝
-              </td>
-
-    
             </tr>
           </tbody>
         </table>
         <div class="row justify-content-between">
           <button @click="desplazamiento++" type="button" class="col btn btn-primary m-2">
-            ↓
+            ⬇️
+          </button>
+          <button @click="desplazamiento = pc >= 0 && pc < 3 ? pc : pc - 3" type="button" class="col btn btn-primary m-2">
+            ⬆️⬇️
           </button>
           <button @click="desplazamiento--" type="button" class="col btn btn-primary m-2">
-            ↑
+            ⬆️
           </button>
-  
         </div>
-        <button @click="recorrer" :disabled="errorIns" type="button" class="col btn btn-primary m-2">
-            Recorrer PC: x{{ indiceRecorrer }} ⤵
+        <div class="row justify-content-between">
+          <button @click="recorrer(false)" :disabled="errorIns" type="button" class="col btn btn-primary m-2">
+             ▶️
           </button>
-        
+          <button @click="recorrer(true)" :disabled="errorIns" type="button" class="col btn btn-primary m-2">
+            ⏭️ PC: x{{ indiceRecorrer }} 
+          </button>
+        </div>
+
       </div>
 
       <div class="col-12 col-sm-6 col-md-1 col-lg-4 col-xl-4 col-xxl-4 animate__animated animate__fadeInRight ">
