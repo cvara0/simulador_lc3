@@ -76,7 +76,7 @@ const recorrer = (esRecorrer) => {
   
   let insBin = memoriaRam.value[pc.value].toString(2).padStart(16, '0') 
   //console.log(insBin);
-  console.log(esRecorrer) //seguir con ejecutar todo
+  console.log(esRecorrer) //seguir con ejecutar todo,contar lineas
   
   const ins = {
     opcode: insBin.substring(0, 4),
@@ -367,7 +367,7 @@ function* DecimalSignoAHexaGenerator1(decimal) { //ver
         </div>
         <div class="row justify-content-between">
           <button @click="recorrer(false)" :disabled="errorIns" type="button" class="col btn btn-primary m-2">
-             ▶️
+             ▶️ (en proceso)
           </button>
           <button @click="recorrer(true)" :disabled="errorIns" type="button" class="col btn btn-primary m-2">
             ⏭️ PC: x{{ indiceRecorrer }} 
