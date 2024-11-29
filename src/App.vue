@@ -7,7 +7,9 @@ const memoriaRam = ref([])
 const aBuscar = ref('')
 const errores = ref([])
 const errorIns = ref(false)
+const cantIns = ref(0)
 const signo = ref("")
+const ramSimulada = ref([])
 
 const insTextoHexa = reactive({
   texto:``,
@@ -48,6 +50,10 @@ watch(aBuscar, ()=>{
     desplazamiento.value = pc.value - 3 
 })
 
+ watch(memoriaRam, ()=>{
+  cantIns.value = memoriaRam.value.filter(i => i !== 0).length
+}) 
+
 ///////////////////////////////////////////////////////////////////////////////
 const cargar = () => {
   let ini = hexadecimalADecimalConSigno(inicio.value);
@@ -74,9 +80,14 @@ const cargar = () => {
 ///////////////////////////////////////////////////////////////////////////////////
 const recorrer = (esRecorrer) => {
   
-  let insBin = memoriaRam.value[pc.value].toString(2).padStart(16, '0') 
-  //console.log(insBin);
-  console.log(esRecorrer) //seguir con ejecutar todo,contar lineas
+  
+  /* for (let i = 0; i < contarIns; i++) {
+   
+  } */
+
+  let insBin = decimalABinarioC2(memoriaRam.value[pc.value]) 
+  
+//seguir con ejecutar todo,contar lineas, subir archivo cargar en textarea drag and drop, ver lenguaje assembly
   
   const ins = {
     opcode: insBin.substring(0, 4),
@@ -188,14 +199,20 @@ function binarioC2ADecimal(binario) {
   }
 }
 
-function decimalASignoHexadecimal(decimal) {
+const decimalABinarioC2 = (decimal) => {
+  const maxBits = 16;
+  const mask = (1 << maxBits) - 1;
+  return (decimal & mask).toString(2).padStart(maxBits, '0');
+}
+
+function decimalConSignoAHexadecimal(decimal) {
   if (decimal >= 0) {
     // Convertir positivo directamente
-    return decimal.toString(16).toUpperCase();
+    return decimal.toString(16).toUpperCase().padStart(4, '0')
   } else {
     // Calcular complemento a dos para negativos
     const complementoDos = (1 << 16) + decimal;
-    return complementoDos.toString(16).toUpperCase();
+    return complementoDos.toString(16).toUpperCase().padStart(4, '0')
   }
 }
 
@@ -215,7 +232,7 @@ function hexadecimalADecimalConSigno(hex) {
 
 const limpiarMemoria = () => {
   errorIns.value = false
-  memoriaRam.value = new Int32Array(16384)
+  memoriaRam.value = new Int16Array(16384)
 }
 const limpiarRegistros = () => {
   registros.value = new Array(8).fill("0000")
@@ -227,18 +244,16 @@ const reiniciarPc = computed(()=>{
   desplazamiento.value = pc.value < 3 ? pc.value :pc.value - 3
 })
 
-const indiceRecorrer = computed(() => decimalASignoHexadecimal(pc.value).padStart(4, "0") ) 
+//const indiceRecorrer = computed(() => decimalConSignoAHexadecimal(pc.value).padStart(4, "0") ) 
+
+
+//const contarIns = computed(() => (insTextoHexa.texto.trim() === '') ? 0 : insTextoHexa.texto.split('\n').filter(line => line.trim() !== '').length)
+
 
 ////////////////////////////////////////////////////////////////////////////////
 
 
-function* DecimalAHexaGenerator(array) {
-  for (const decimal of array) {
-    yield decimal.toString(16).toUpperCase().padStart(4, '0'); 
-  }
-}
-
-const ramDecimalAHexa1 = computed(() => decimalASignoHexadecimal(memoriaRam.value[pc.value-1]).padStart(4, '0'))
+const ramDecimalAHexa = computed(() => decimalConSignoAHexadecimal(memoriaRam.value[pc.value-1]))
   
 
 function* DecimalSignoAHexaGenerator1(decimal) { //ver
@@ -259,9 +274,19 @@ function* DecimalSignoAHexaGenerator1(decimal) { //ver
       memoriaRam.value[index] = decimalValue
     }
 
-  function itemDecimalAHexa(item){
+  function indexDecimalAHexa(item){
     return item.toString(16).toUpperCase().padStart(4, '0')
   }
+
+const limpiarRamSimulada = () => {
+  ramSimulada.value = [];
+  const bloques = Math.ceil(65536 / 1024);
+  for (let i = 0; i < bloques; i++) {
+    memory.push(new Array(1024).fill(0));
+  }
+  return memory;
+}
+
 
 </script>
 
@@ -291,7 +316,7 @@ function* DecimalSignoAHexaGenerator1(decimal) { //ver
           > </textarea>
           <button type="submit" class="btn btn-primary">Cargar a memoria ⤴</button>
         </form>
-
+    
         <div v-if="errores.length > 0" class="mt-2">
           <div class="alert alert-danger" role="alert">Errores de carga:</div>
           <ul v-for="item in errores" class="list-group">
@@ -304,7 +329,7 @@ function* DecimalSignoAHexaGenerator1(decimal) { //ver
       </div>
 
       <div class="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-4	col-xxl-4  animate__animated animate__fadeInUp">
-        <h4>Memoria RAM {{ memoriaRam.length }}</h4>
+        <h4>Memoria RAM {{ cantIns }}/{{ memoriaRam.length }} </h4>
         <div class="row justify-content-between">
           <button @click="limpiarMemoria" type="button" class="col btn btn-danger m-2">
             Limpiar memoria
@@ -321,7 +346,7 @@ function* DecimalSignoAHexaGenerator1(decimal) { //ver
         </div>
         
         <div v-show="errorIns" class="alert alert-danger" role="alert">
-          ⛔ Instrucción no reconocida: "{{ ramDecimalAHexa1 }}" ⛔
+          ⛔ Instrucción no reconocida: "{{ ramDecimalAHexa }}" ⛔
         </div>
         <table @wheel="handleWheel" class="table table-hover">
           <thead>
@@ -338,14 +363,14 @@ function* DecimalSignoAHexaGenerator1(decimal) { //ver
               v-show="(desplazamiento <= index) && (index<=desplazamiento+7)"
             >
               <td 
-                @click="pc = index" 
+                @click="pc = index; errorIns = false" 
                 :class="[pc == index ? 'table-primary' : 'table-ligth']"
                 >
-                {{ itemDecimalAHexa(index)}}
+                {{ indexDecimalAHexa(index)}}
               </td>
               
               <td>
-                <input maxlength="4" :value="itemDecimalAHexa(item)" 
+                <input maxlength="4" :value="decimalConSignoAHexadecimal(item)" 
                 @input="updateMemory(index, $event.target.value)" type="text"
                 @focus="$event.target.select()"
                 style="width: 50px; text-align:center"
@@ -356,13 +381,13 @@ function* DecimalSignoAHexaGenerator1(decimal) { //ver
         </table>
         <div class="row justify-content-between">
           <button @click="desplazamiento++" type="button" class="col btn btn-primary m-2">
-            ⬇️
+            🔽
           </button>
           <button @click="desplazamiento = pc >= 0 && pc < 3 ? pc : pc - 3" type="button" class="col btn btn-primary m-2">
-            ⬆️⬇️
+            🟠
           </button>
           <button @click="desplazamiento--" type="button" class="col btn btn-primary m-2">
-            ⬆️
+            🔼
           </button>
         </div>
         <div class="row justify-content-between">
@@ -370,7 +395,7 @@ function* DecimalSignoAHexaGenerator1(decimal) { //ver
              ▶️ (en proceso)
           </button>
           <button @click="recorrer(true)" :disabled="errorIns" type="button" class="col btn btn-primary m-2">
-            ⏭️ PC: x{{ indiceRecorrer }} 
+            ⏭️ PC: x{{ indexDecimalAHexa(pc) }} 
           </button>
         </div>
 
