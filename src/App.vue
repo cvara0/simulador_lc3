@@ -3,16 +3,24 @@ import { ref, reactive, onMounted, computed,onUnmounted, watch } from "vue"
 import Registros from "./components/Registros.vue"
 
 const registros = ref([])
-const memoriaRam = ref([])
+const memoriaRam = ref(new Int16Array(16384))
+
 const aBuscar = ref('')
 const errores = ref([])
 const errorIns = ref(false)
 const cantIns = ref(0)
 const signo = ref("")
-const ramSimulada = ref([])
+
 
 const insTextoHexa = reactive({
-  texto:``,
+  texto:`1265
+14A3
+1642
+5642
+5664
+96FF
+33FF
+29FE`,
 })
 
 const inicio = ref("3000")
@@ -20,6 +28,13 @@ const desplazamiento = ref(12285)
 const pc = ref(12288)
 
 const scrollDelta = ref(0)
+
+const totalRows = 65000; // Total de filas
+const rowsPerPage = 20; // Filas visibles al mismo tiempo
+const buffer = 5; // Buffer adicional para un scroll fluido
+const rowHeight = 30; // Altura de cada fila en px
+const startIndex = ref(0);
+
 
 onMounted(() => {
   limpiarMemoria()
@@ -56,7 +71,7 @@ watch(aBuscar, ()=>{
 
 ///////////////////////////////////////////////////////////////////////////////
 const cargar = () => {
-  let ini = hexadecimalADecimalConSigno(inicio.value);
+  let ini = hexadecimalADecimalSinSigno(inicio.value);
   errorIns.value = false
   const lineas = insTextoHexa.texto
     .trim()
@@ -68,8 +83,11 @@ const cargar = () => {
     .filter((r) => !r.valida)
 
   if (errores.value.length === 0) {
+    
     lineas.forEach((valor, i) => {
-      memoriaRam.value[ini + i] = parseInt(valor, 16)
+
+
+      memoriaRam.value[ini + i] = hexadecimalADecimalConSigno(valor)
     })
     pc.value = ini
     desplazamiento.value = pc.value >= 0 && pc.value < 3 ? pc.value : pc.value - 3
@@ -177,7 +195,7 @@ const recorrer = (esRecorrer) => {
       break;
   }
 
-  registros.value = registros.value.map((i) => DecimalSignoAHexaGenerator1(i).next().value);
+  registros.value = registros.value.map((i) => decimalConSignoAHexadecimal(i));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -200,20 +218,24 @@ function binarioC2ADecimal(binario) {
 }
 
 const decimalABinarioC2 = (decimal) => {
-  const maxBits = 16;
-  const mask = (1 << maxBits) - 1;
-  return (decimal & mask).toString(2).padStart(maxBits, '0');
+  const mask = (1 << 16) - 1;
+  return (decimal & mask).toString(2).padStart(16, '0');
 }
 
-function decimalConSignoAHexadecimal(decimal) {
-  if (decimal >= 0) {
-    // Convertir positivo directamente
-    return decimal.toString(16).toUpperCase().padStart(4, '0')
+function decimalConSignoAHexadecimal(sdecimal) {
+  if (sdecimal >= 0) {
+    return sdecimal.toString(16).toUpperCase().padStart(16 / 4, '0');
   } else {
-    // Calcular complemento a dos para negativos
-    const complementoDos = (1 << 16) + decimal;
-    return complementoDos.toString(16).toUpperCase().padStart(4, '0')
+    return (Math.pow(2, 16) + sdecimal).toString(16).toUpperCase().padStart(16 / 4, '0');
   }
+}
+
+function decimalSinSignoAHexadecimal(udecimal){
+    return udecimal.toString(16).toUpperCase().padStart(4, '0')
+  }
+
+function hexadecimalADecimalSinSigno(hex){
+  return parseInt(hex, 16)
 }
 
 function hexadecimalADecimalConSigno(hex) {
@@ -256,16 +278,6 @@ const reiniciarPc = computed(()=>{
 const ramDecimalAHexa = computed(() => decimalConSignoAHexadecimal(memoriaRam.value[pc.value-1]))
   
 
-function* DecimalSignoAHexaGenerator1(decimal) { //ver
-  if (decimal < 0) {
-    const hexValue = (Math.pow(2, 16) + decimal).toString(16).toUpperCase();
-    yield hexValue;
-  } else {
-    const hexValue = decimal.toString(16).toUpperCase().padStart(4, '0');
-    yield hexValue;
-  }
-}
-
 ///////////////////////////////////////////////////////////////////////
     // Función para actualizar el valor en memoria
   const updateMemory = (index, newValue) => {
@@ -274,18 +286,12 @@ function* DecimalSignoAHexaGenerator1(decimal) { //ver
       memoriaRam.value[index] = decimalValue
     }
 
-  function indexDecimalAHexa(item){
-    return item.toString(16).toUpperCase().padStart(4, '0')
-  }
 
-const limpiarRamSimulada = () => {
-  ramSimulada.value = [];
-  const bloques = Math.ceil(65536 / 1024);
-  for (let i = 0; i < bloques; i++) {
-    memory.push(new Array(1024).fill(0));
-  }
-  return memory;
-}
+  const visibleRows = computed(() => {
+      const endIndex = Math.min(startIndex.value + rowsPerPage + buffer, totalRows);
+      return memoriaRam.value.slice(startIndex.value, endIndex);
+    });
+////////////////////////////////////////////////////////////////////////////////////
 
 
 </script>
@@ -353,20 +359,19 @@ const limpiarRamSimulada = () => {
             <tr>
               <th scope="col">Dirección</th>
               <th scope="col">Contenido</th>
-              <!--<th scope="col">Contenido en Assembly</th>-->
+              <!--<th scope="col">Contenido en Assembly</th>:key="startIndex + index"-->
             </tr>
           </thead>
           <tbody>
-            
             <tr
-              v-for="(item, index) in memoriaRam"
+              v-for="(item, index) in memoriaRam" 
               v-show="(desplazamiento <= index) && (index<=desplazamiento+7)"
             >
               <td 
                 @click="pc = index; errorIns = false" 
                 :class="[pc == index ? 'table-primary' : 'table-ligth']"
                 >
-                {{ indexDecimalAHexa(index)}}
+                {{ decimalSinSignoAHexadecimal(index)}}
               </td>
               
               <td>
@@ -395,7 +400,7 @@ const limpiarRamSimulada = () => {
              ▶️ (en proceso)
           </button>
           <button @click="recorrer(true)" :disabled="errorIns" type="button" class="col btn btn-primary m-2">
-            ⏭️ PC: x{{ indexDecimalAHexa(pc) }} 
+            ⏭️ PC: x{{ decimalSinSignoAHexadecimal(pc) }} 
           </button>
         </div>
 
