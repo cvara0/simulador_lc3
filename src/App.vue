@@ -439,6 +439,55 @@ function processFileContent(content) {
         />
       </div>
     </div>
+  <div class="mt-4" style="text-align:justify;">
+    <h5>Consideraciones</h5>
+    <p >
+    Realizar este laboratorio en Vue.js tiene tanto ventajas como desventajas:
+    <h6>Ventajas:</h6>
+    <ol>
+      <li><b>Administración de componentes y comunicación entre ellos:</b>  Vue facilita la interacción entre diferentes elementos de la aplicación, como entradas de datos (inputs) y operaciones, permitiendo que los cambios se reflejen casi instantáneamente al modificar una variable.</li>
+      <li><b>Interfaz de usuario amigable y flexible:</b>  El framework permite crear interfaces más atractivas y dinámicas, con alta capacidad de personalización en cuanto a la visualización y manipulación de datos.</li>
+      <li><b>Velocidad de desarrollo:</b>  Vue ofrece herramientas como clases y métodos predefinidos que simplifican la creación de componentes y la vinculación entre entradas y procesamiento de datos, acelerando significativamente el proceso de programación.</li>
+      <li><b>Uso de Bootstrap:</b> Es un framework web que facilita crear sitios responsivos con componentes predefinidos, grillas y utilidades CSS, agilizando el diseño y desarrollo de interfaces atractivas.</li>
+    </ol>
+    <h6>Desventajas:</h6>
+    <ol>
+      <li><b>Consumo de recursos:</b> Simular una memoria precargada con valores resulta engorroso y costoso en términos de rendimiento. Con mi experiencia actual, no fue posible simular una memoria de 65,535 posiciones debido al alto consumo de recursos. Como solución temporal, se redujo a 32,768 posiciones, aunque el consumo sigue siendo elevado. En el futuro, se explorarán alternativas para mejorar la eficiencia y reducir el impacto en el rendimiento.</li>
+    </ol>
+    <h6>Conclusión:</h6>
+    <p>En todo momento, la herramienta de IA generativa ha sido de gran ayuda, permitiendo reducir significativamente los tiempos de programación. Su aporte ha sido especialmente valioso en la creación de métodos específicos, la clarificación de conceptos y la simplificación del código, logrando así un desarrollo más eficiente.
+      El desarrollo de software es un proceso iterativo e incremental, en el que siempre surgen errores o áreas de mejora que deben resolverse. El objetivo principal es minimizar la aparición de problemas en el uso normal de la aplicación. Esta aplicación no está exenta de errores o detalles que, con una exploración más profunda, los usuarios podrán descubrir.</p>
+    </p>
+    <h6>Instrucciones de prueba:</h6>
+</div>
+
+    <ul class="list-group list-group-flush"  style="text-align:justify;">
+      <li class="list-group-item">1265 ::: ADD R1, R1, #5 ::: R1 = 0005 </li>
+      <li class="list-group-item">14A3 ::: ADD R2, R2, #3 ::: R2 = 0003 </li>
+      <li class="list-group-item">1642 ::: ADD R3, R1, R2 ::: R3 = 0008 </li>
+      <li class="list-group-item">5642 ::: AND R3, R1, R2 ::: R3 = 0001 </li>
+      <li class="list-group-item">5664 ::: AND R3, R1, #4 ::: R3 = 0004 </li>
+      <li class="list-group-item">96FF ::: NOT R3, R3 ::: R3 = FFFB </li>
+      <li class="list-group-item">33FF ::: ST R1, #0 ::: M[3006] = 0005 </li>
+      <li class="list-group-item">29FE ::: LD R4, #-2 ::: R4 = 0005 </li>
+      <li class="list-group-item">6A84 ::: LDR R5, R2, #4 ::: R5 = M[0007] </li>
+      <li class="list-group-item">7643 ::: STR R3, R1, #3 ::: M[0008] = FFFB </li>
+      <li class="list-group-item">1CA0 ::: ADD R6, R2, #0 ::: R6 = R2 </li>
+      <li class="list-group-item">1DBF ::: ADD R6, R6, #-1 ::: R6 = R6 - 1 </li>
+      <li class="list-group-item">07FE ::: BRzp #-2 ::: Vuelve a la instrucción anterior, R6 = R6 - 1, hasta que R6 sea negativo </li>
+      <li class="list-group-item">1CA0 ::: ADD R6, R2, #0 ::: R6 = R2 </li>
+      <li class="list-group-item">1DBF ::: ADD R6, R6, #-1 ::: R6 = R6 - 1  </li>
+      <li class="list-group-item">03FE ::: BRp #-2 ::: Vuelve a la instrucción anterior, R6 = R6 - 1, hasta que R6 sea cero o negativo</li>
+      <li class="list-group-item">1CE0 ::: ADD R6, R3, #0 ::: R6 = R3  </li>
+      <li class="list-group-item">1DA1 ::: ADD R6, R6, #1 ::: R6 = R6 + 1 </li>
+      <li class="list-group-item">0DFE ::: BRnz #-2 ::: Vuelve a la instrucción anterior, R6 = R6 + 1, hasta que R6 sea positivo</li>
+      <li class="list-group-item">1CE0 ::: ADD R6, R3, #0 ::: R6 = R3 </li>
+      <li class="list-group-item">1DA1 ::: ADD R6, R6, #1 ::: R6 = R6 + 1 </li>
+      <li class="list-group-item">09FE ::: BRn #-2 ::: Vuelve a la instrucción anterior, R6 = R6 + 1, hasta que R6 sea cero o positivo </li>
+      <li class="list-group-item">C040 ::: JMP R1 ::: PC = R1 </li>
+    </ul>
+      
+
   </div>
   <footer>Parra Cristian V.R. -- Laboratorio 5 -- Arquitectura de Computadoras</footer>
 </template>
