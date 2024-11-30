@@ -2,7 +2,7 @@
 import { ref, reactive, onMounted, computed,onUnmounted, watch } from "vue"
 import Registros from "./components/Registros.vue"
 
-//seguir con ejecutar todo,contar lineas, subir archivo cargar en textarea drag and drop, ver lenguaje assembly
+//subir archivo cargar en textarea drag and drop, ver lenguaje assembly
 
 
 const registros = ref([])
@@ -338,7 +338,10 @@ function processFileContent(content) {
     <div class="row justify-content-center">
       <div class="col-12 col-sm-12 col-md-5 col-lg-4 col-xl-4 col-xxl-4 animate__animated animate__fadeInLeft">
         <h4 class="mt-4">Instrucciones en Hexadecimal</h4>
-
+        <div class="mb-3">
+          <label for="formFileSm" class="form-label">Subir archivo .txt con las instrucciones (en proceso)</label>
+          <input class="form-control form-control-sm" id="formFileSm" type="file">
+        </div>
         <form @submit.prevent="cargar" class="form-floating d-grid gap-2">
 
           <div class="form-floating mb-2">
@@ -387,7 +390,7 @@ function processFileContent(content) {
         <div v-show="errorIns" class="alert alert-danger" role="alert">
           ⛔  {{msjHalt}}  ⛔
         </div>
-        <table @wheel="handleWheel" class="table table-hover">
+        <table  class="table table-hover table-ligth">
           <thead>
             <tr>
               <th scope="col">Dirección</th>
@@ -399,10 +402,11 @@ function processFileContent(content) {
             <tr
               v-for="(item, index) in memoriaRam" 
               :class="[(desplazamiento <= index) && (index<=desplazamiento+6)? 'd-table-row' : 'd-none']"
+              @wheel="handleWheel"
             >
               <td 
                 @click="pc = index; errorIns = false;" 
-                :class="[pc == index ? 'table-primary' : 'table-ligth']"
+                :class="[pc == index ? 'table-primary' : '']"
                 >
                 {{ decimalSinSignoAHexadecimal(index)}}
               </td>
