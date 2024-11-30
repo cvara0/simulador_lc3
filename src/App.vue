@@ -2,6 +2,7 @@
 import { ref, reactive, onMounted, computed,onUnmounted, watch } from "vue"
 import Registros from "./components/Registros.vue"
 
+//seguir con ejecutar todo,contar lineas, subir archivo cargar en textarea drag and drop, ver lenguaje assembly
 
 
 const registros = ref([])
@@ -12,7 +13,7 @@ const errores = ref([])
 const errorIns = ref(false)
 const cantIns = ref(0)
 const signo = ref("")
-
+const msjHalt = ref("")
 
 const insTextoHexa = reactive({
   texto:`1265
@@ -103,21 +104,29 @@ const cargar = () => {
     })
     pc.value = ini
     desplazamiento.value = pc.value >= 0 && pc.value < 3 ? pc.value : pc.value - 3
+    cantIns.value = lineas.length
   }
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
 const recorrer = (esRecorrer) => {
   
-  
-  /* for (let i = 0; i < contarIns; i++) {
-   
-  } */
-//seguir con ejecutar todo,contar lineas, subir archivo cargar en textarea drag and drop, ver lenguaje assembly
-  
+  if(esRecorrer){
+    procesarIns()
+  }
+  else{
+    while(!errorIns.value) {
+    procesarIns()
+    }
+  }
+} 
+
+////////////////////////////////////////////////////////////////////////////////
+
+function procesarIns(){
   if (memoriaRam.value[pc.value] === 0) {
     errorIns.value = true
+    msjHalt.value= "Ejecución finalizada"
   } else {
     let insBin = decimalABinarioC2(memoriaRam.value[pc.value])
     const ins = {
@@ -205,6 +214,8 @@ const recorrer = (esRecorrer) => {
         break;
       default:
         errorIns.value = true
+        msjHalt.value = "Instrucción desconocida"
+        pc.value--
         break;
     }
 
@@ -212,10 +223,6 @@ const recorrer = (esRecorrer) => {
   }
 
 }
-
-////////////////////////////////////////////////////////////////////////////////
-
-
 
 ///////////////////////////////////////////////////////////////////////
 function binarioC2ADecimal(binario) {
@@ -378,7 +385,7 @@ function processFileContent(content) {
         </div>
         
         <div v-show="errorIns" class="alert alert-danger" role="alert">
-          ⛔  Ejecución detenida  ⛔
+          ⛔  {{msjHalt}}  ⛔
         </div>
         <table @wheel="handleWheel" class="table table-hover">
           <thead>
@@ -423,7 +430,7 @@ function processFileContent(content) {
         </div>
         <div class="row justify-content-between">
           <button @click="recorrer(false)" :disabled="errorIns" type="button" class="col btn btn-primary m-2">
-             ▶️ (en proceso)
+             ▶️
           </button>
           <button @click="recorrer(true)" :disabled="errorIns" type="button" class="col btn btn-primary m-2">
             ⏭️ PC: x{{ decimalSinSignoAHexadecimal(pc) }} 
@@ -452,7 +459,7 @@ function processFileContent(content) {
     </ol>
     <h6>Desventajas:</h6>
     <ol>
-      <li><b>Consumo de recursos:</b> Simular una memoria precargada con valores resulta engorroso y costoso en términos de rendimiento. Con mi experiencia actual, no fue posible simular una memoria de 65,535 posiciones debido al alto consumo de recursos. Como solución temporal, se redujo a 32,768 posiciones, aunque el consumo sigue siendo elevado. En el futuro, se explorarán alternativas para mejorar la eficiencia y reducir el impacto en el rendimiento.</li>
+      <li><b>Consumo de recursos:</b> Simular una memoria precargada con valores resulta engorroso y costoso en términos de rendimiento. Con mi experiencia actual, no fue posible simular una memoria de 65.535 posiciones debido al alto consumo de recursos. Como solución temporal, se redujo a 32.768 posiciones, aunque el consumo sigue siendo elevado. En el futuro, se explorarán alternativas para mejorar la eficiencia y reducir el impacto en el rendimiento.</li>
     </ol>
     <h6>Conclusión:</h6>
     <p>En todo momento, la herramienta de IA generativa ha sido de gran ayuda, permitiendo reducir significativamente los tiempos de programación. Su aporte ha sido especialmente valioso en la creación de métodos específicos, la clarificación de conceptos y la simplificación del código, logrando así un desarrollo más eficiente.
