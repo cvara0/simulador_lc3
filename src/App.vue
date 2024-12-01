@@ -1,12 +1,12 @@
 <script setup>
 import { ref, reactive, onMounted, computed,onUnmounted, watch } from "vue"
 import Registros from "./components/Registros.vue"
-
+import { useVirtualList } from "@vueuse/core";
 //subir archivo cargar en textarea drag and drop, ver lenguaje assembly
-
+//seguir con adaptar a la tabla original
 
 const registros = ref([])
-const memoriaRam = ref(new Int16Array(32768))
+const memoriaRam = ref(new Array(65536).fill("0000"))
 
 const aBuscar = ref('')
 const errores = ref([])
@@ -14,6 +14,7 @@ const errorIns = ref(false)
 const cantIns = ref(0)
 const signo = ref("")
 const msjHalt = ref("")
+
 
 const insTextoHexa = reactive({
   texto:`1265
@@ -42,46 +43,55 @@ C040`,
 })
 
 const inicio = ref("3000")
-const desplazamiento = ref(12285)
 const pc = ref(12288)
 
-const scrollDelta = ref(0)
+
 
 onMounted(() => {
   limpiarMemoria()
   limpiarRegistros()
+  scrollTo(pc.value-7)
   //window.addEventListener('wheel', handleWheel)
 })
 
 onUnmounted(() => {
-      window.removeEventListener('wheel', handleWheel)
+      /* window.removeEventListener('wheel', handleWheel) */
     })
 
 const limpiarMemoria = () => {
   errorIns.value = false
-  memoriaRam.value = new Int16Array(32768)
+  memoriaRam.value = new Array(65536).fill("0000")
+  pc.value = hexadecimalADecimalConSigno(inicio.value)
+  scrollTo(pc.value-7)
+  
 }
 const limpiarRegistros = () => {
   registros.value = new Array(8).fill("0000")
 }
 
-const handleWheel = (event) => {
+const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(memoriaRam.value, {
+      itemHeight: 34, // Ajusta la altura de cada fila en píxeles
+    });
+
+/*  const handleWheel = (event) => {
       scrollDelta.value = event.deltaY
       if(Math.sign(event.deltaY) == 1){
         desplazamiento.value++
       }else{
         desplazamiento.value--
       }
-      desplazamiento.value = desplazamiento.value <= 0 ? 0 : desplazamiento.value > 16384 ? 16384 : desplazamiento.value
-      event.preventDefault();
-    }
+      desplazamiento.value = desplazamiento.value <= 0 ? 0 : desplazamiento.value > 35536? 35536 : desplazamiento.value
+    
+    } */ 
 
-watch(aBuscar, ()=>{
+ watch(aBuscar, ()=>{
   if(aBuscar.value)
-      desplazamiento.value = hexadecimalADecimalConSigno(aBuscar.value)
+    scrollTo(hexadecimalADecimalSinSigno(aBuscar.value)) 
   else
-    desplazamiento.value = pc.value - 3 
-})
+    scrollTo(pc.value - 7)
+}) 
+
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -100,35 +110,41 @@ const cargar = () => {
   if (errores.value.length === 0) {
     
     lineas.forEach((valor, i) => {
-      memoriaRam.value[ini + i] = hexadecimalADecimalConSigno(valor)
+      memoriaRam.value[ini + i] = valor
     })
     pc.value = ini
-    desplazamiento.value = pc.value >= 0 && pc.value < 3 ? pc.value : pc.value - 3
+    /* desplazamiento.value = pc.value >= 0 && pc.value < 3 ? pc.value : pc.value - 3 */
     cantIns.value = lineas.length
+    scrollTo(pc.value-7)
   }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
 const recorrer = (esRecorrer) => {
-  
-  if(esRecorrer){
-    procesarIns()
-  }
-  else{
-    while(!errorIns.value) {
-    procesarIns()
+  if (esHexadecimal(memoriaRam.value[pc.value])){
+    if(esRecorrer){
+        procesarIns()
+      }
+    else{
+      while(!errorIns.value) {
+        procesarIns()
+      }
     }
-  }
+  } 
+  else{
+        errorIns.value = true
+        msjHalt.value = "Instrucción desconocida: "+memoriaRam.value[pc.value]
+      }
 } 
 
 ////////////////////////////////////////////////////////////////////////////////
 
 function procesarIns(){
-  if (memoriaRam.value[pc.value] === 0) {
+  if (memoriaRam.value[pc.value] === "0000") {
     errorIns.value = true
     msjHalt.value= "Ejecución finalizada"
   } else {
-    let insBin = decimalABinarioC2(memoriaRam.value[pc.value])
+    let insBin = hexadecimalABinario16(memoriaRam.value[pc.value])
     const ins = {
       opcode: insBin.substring(0, 4),
       dr: parseInt(insBin.substring(4, 7), 2),
@@ -148,12 +164,12 @@ function procesarIns(){
 
     registros.value = registros.value.map((i) => hexadecimalADecimalConSigno(i))
 
-    if (pc.value > 16384) 
-      pc.value = 16384
+    if (pc.value > 35356) 
+      pc.value = 35356
     else 
       {
         pc.value++
-        desplazamiento.value = pc.value - 3 //ver para 0000
+        scrollTo(pc.value-7)
       }
 
     switch (ins.opcode) {
@@ -176,11 +192,11 @@ function procesarIns(){
           (ins.p === "1" && signo.value === 1)
         )
           pc.value = pc.value + ins.PCoffset9
-          desplazamiento.value = pc.value >= 0 && pc.value < 3 ? pc.value : pc.value - 3
+          scrollTo(pc.value-7)
         break;
       case "1100": //jmp ret
         pc.value = registros.value[ins.baseR];
-        desplazamiento.value = pc.value >= 0 && pc.value < 3 ? pc.value : pc.value - 3
+        scrollTo(pc.value-7)
         break;
       case "0100": //jsr jsrr
         let temp = pc.value;
@@ -189,32 +205,32 @@ function procesarIns(){
             ? registros.value[ins.baseR]
             : pc.value + ins.PCoffset11;
         registros.value[7] = temp;
-        desplazamiento.value = pc.value >= 0 && pc.value < 3 ? pc.value : pc.value - 3
+        scrollTo(pc.value-7)
         break;
       case "0010": //ld
-        registros.value[ins.dr] = memoriaRam.value[pc.value + ins.PCoffset9];
+        registros.value[ins.dr] = hexadecimalADecimalConSigno(memoriaRam.value[pc.value + ins.PCoffset9])
         break;
       case "1010": //ldi
-        registros.value[ins.dr] = memoriaRam.value[memoriaRam.value[pc.value + ins.PCoffset9]];
+        registros.value[ins.dr] = hexadecimalADecimalConSigno(memoriaRam.value[memoriaRam.value[pc.value + ins.PCoffset9]])
         break;
       case "0110": //ldr
-        registros.value[ins.dr] = memoriaRam.value[registros.value[ins.baseR] + ins.offset6];
+        registros.value[ins.dr] = hexadecimalADecimalConSigno(memoriaRam.value[registros.value[ins.baseR] + ins.offset6])
         break;
       case "1110": //lea
         registros.value[ins.dr] = pc.value + ins.PCoffset9;
         break;
       case "0011": //st
-        memoriaRam.value[pc.value + ins.PCoffset9] = registros.value[ins.sr];
+        memoriaRam.value[pc.value + ins.PCoffset9] = decimalConSignoAHexadecimal(registros.value[ins.sr])
         break;
       case "1011": //sti
-        memoriaRam.value[memoriaRam.value[pc.value + ins.PCoffset9]] = registros.value[ins.sr];
+        memoriaRam.value[hexadecimalADecimalConSigno(memoriaRam.value[pc.value + ins.PCoffset9])] = decimalConSignoAHexadecimal(registros.value[ins.sr])
         break;
       case "0111": //str
-        memoriaRam.value[registros.value[ins.baseR] + ins.offset6] = registros.value[ins.sr];
+        memoriaRam.value[registros.value[ins.baseR] + ins.offset6] = decimalConSignoAHexadecimal(registros.value[ins.sr])
         break;
       default:
         errorIns.value = true
-        msjHalt.value = "Instrucción desconocida"
+        msjHalt.value = "Instrucción desconocida: "+memoriaRam.value[pc.value-1]
         pc.value--
         break;
     }
@@ -225,6 +241,11 @@ function procesarIns(){
 }
 
 ///////////////////////////////////////////////////////////////////////
+const esHexadecimal= (valor) => /^[0-9a-fA-F]+$/.test(valor)
+
+const hexadecimalABinario16 = (hex) => parseInt(hex, 16).toString(2).padStart(16, '0')
+
+
 function binarioC2ADecimal(binario) {
   const longitud = binario.length;
   const esNegativo = binario[0] === "1"; // Chequear el bit de signo
@@ -246,9 +267,9 @@ const decimalABinarioC2 = (decimal) => {
 
 function decimalConSignoAHexadecimal(sdecimal) {
   if (sdecimal >= 0) {
-    return sdecimal.toString(16).toUpperCase().padStart(4, '0')
+    return sdecimal.toString(16).padStart(4, '0').toUpperCase()
   } else {
-    return (Math.pow(2, 16) + sdecimal).toString(16).toUpperCase().padStart(4, '0')
+    return (Math.pow(2, 16) + sdecimal).toString(16).padStart(4, '0').toUpperCase()
   }
 }
 
@@ -278,8 +299,8 @@ function hexadecimalADecimalConSigno(hex) {
 const reiniciarPc = computed(()=>{
   errorIns.value = false
   pc.value = hexadecimalADecimalConSigno(inicio.value)
-  desplazamiento.value = pc.value < 3 ? pc.value :pc.value - 3
-})
+  scrollTo(pc.value-7)
+ })
 
 //const indiceRecorrer = computed(() => decimalConSignoAHexadecimal(pc.value).padStart(4, "0") ) 
 
@@ -297,8 +318,7 @@ const ramDecimalAHexa = computed(() => decimalConSignoAHexadecimal(memoriaRam.va
     // Función para actualizar el valor en memoria
 const updateMemory = (index, newValue) => {
       // Convierte el valor hexadecimal a decimal antes de guardarlo
-      const decimalValue = parseInt(newValue, 16) || 0
-      memoriaRam.value[index] = decimalValue
+      memoriaRam.value[index] = parseInt(newValue, 16) || 0
     }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -365,7 +385,7 @@ function processFileContent(content) {
             <li class="list-group-item">En linea {{ item.linea }}</li>
           </ul>
         </div>
-        <div v-else-if="memoriaRam.some((i) => i !== 0)" class="mt-2">
+        <div v-else-if="memoriaRam.some((i) => i !== '0000')" class="mt-2">
           <div class="alert alert-success" role="alert">Carga OK👍</div>
         </div>
       </div>
@@ -380,22 +400,21 @@ function processFileContent(content) {
             Reiniciar PC
           </button>
   
-    
-          <div class="form-floating mb-2">
-            <input v-model="aBuscar" type="text" maxlength="4" class="form-control" id="floatingInput" placeholder="name@example.com">
-            <label for="floatingInput">🔍Buscar dirección:</label>
+          <div class="input-group mb-2">
+            <input v-model="aBuscar" maxlength="4" type="text" class="form-control" placeholder="🔍Buscar dirección" aria-label="Dirección">
+            <input v-model="aBuscar" maxlength="4" type="text" class="form-control" placeholder="🔍 (en proceso)Buscar instrucción" aria-label="Instrucción">
           </div>
+
+      
         </div>
+ 
+  
         
-        <div v-show="errorIns" class="alert alert-danger" role="alert">
-          ⛔  {{msjHalt}}  ⛔
-        </div>
-        <table  class="table table-hover table-ligth">
+        <!-- <table  class="table table-hover table-ligth">
           <thead>
             <tr>
               <th scope="col">Dirección</th>
               <th scope="col">Contenido</th>
-              <!--<th scope="col">Contenido en Assembly</th>:key="startIndex + index"-->
             </tr>
           </thead>
           <tbody>
@@ -420,18 +439,43 @@ function processFileContent(content) {
               </td>
             </tr>
           </tbody>
-        </table>
-        <div class="row justify-content-between">
-          <button @click="desplazamiento++" type="button" class="col btn btn-primary m-2">
-            🔽
-          </button>
-          <button @click="desplazamiento = pc >= 0 && pc < 3 ? pc : pc - 3" type="button" class="col btn btn-primary m-2">
-            🟠
-          </button>
-          <button @click="desplazamiento--" type="button" class="col btn btn-primary m-2">
-            🔼
-          </button>
-        </div>
+        </table> -->
+
+        <div v-bind="containerProps" class="virtual-container table table-hover table-ligth"> 
+            <div v-bind="wrapperProps"class="virtual-wrapper">
+              <!-- Renderiza los elementos visibles -->
+              <div
+                v-for="item in list"
+                :key="item.index"
+                class="virtual-item"
+              >
+              <div
+                @click="pc = item.index; errorIns = false;" 
+                :class="[pc == item.index ? 'table-primary' : '']"
+               
+                >
+                {{ decimalSinSignoAHexadecimal(item.index) }}
+              </div>
+               <!--  <span>Dirección: {{ item.index }}</span> -->
+                <input
+                  type="text"
+
+                  v-model="memoriaRam[item.index]"
+                  @focus="$event.target.select()"
+                  maxlength="4"
+                  class="memory-input"
+                />
+              </div>
+            </div>
+          </div>
+            
+          <div v-show="errorIns" class="alert alert-danger" role="alert">
+          ⛔  {{msjHalt}}  ⛔
+          </div>
+      
+            <!-- desplazamiento++   desplazamiento = pc >= 0 && pc < 3 ? pc : pc - 3  desplazamiento---->
+        
+     
         <div class="row justify-content-between">
           <button @click="recorrer(false)" :disabled="errorIns" type="button" class="col btn btn-primary m-2">
              ▶️
@@ -450,6 +494,10 @@ function processFileContent(content) {
         />
       </div>
     </div>
+
+
+
+    
   <div class="mt-4" style="text-align:justify;">
     <h5>Consideraciones</h5>
     <p >
@@ -463,7 +511,7 @@ function processFileContent(content) {
     </ol>
     <h6>Desventajas:</h6>
     <ol>
-      <li><b>Consumo de recursos:</b> Simular una memoria precargada con valores resulta engorroso y costoso en términos de rendimiento. Con mi experiencia actual, no fue posible simular una memoria de 65.535 posiciones debido al alto consumo de recursos. Como solución temporal, se redujo a 32.768 posiciones, aunque el consumo sigue siendo elevado. En el futuro, se explorarán alternativas para mejorar la eficiencia y reducir el impacto en el rendimiento.</li>
+      <li><b>Consumo de recursos (resuelto):</b> Simular una memoria precargada con valores resulta engorroso y costoso en términos de rendimiento. Con mi experiencia actual, no fue posible simular una memoria de 65.535 posiciones debido al alto consumo de recursos. Como solución temporal, se redujo a 32.768 posiciones, aunque el consumo sigue siendo elevado. En el futuro, se explorarán alternativas para mejorar la eficiencia y reducir el impacto en el rendimiento.</li>
     </ol>
     <h6>Conclusión:</h6>
     <p>En todo momento, la herramienta de IA generativa ha sido de gran ayuda, permitiendo reducir significativamente los tiempos de programación. Su aporte ha sido especialmente valioso en la creación de métodos específicos, la clarificación de conceptos y la simplificación del código, logrando así un desarrollo más eficiente.
@@ -504,6 +552,10 @@ function processFileContent(content) {
 </template>
 
 <style scoped>
+.recycle-scroller {
+  max-height: 400px; /* Altura máxima del área visible */
+  overflow-y: auto;/* Habilitar desplazamiento vertical */
+}
 textarea.numbered {
   background: url(http://i.imgur.com/2cOaJ.png);
   background-attachment: local;
@@ -521,4 +573,33 @@ textarea.numbered {
 .ocultar{
   display: none
 }
+
+
+.virtual-container {
+  height: 500px; /* Ajusta la altura visible */
+  overflow-y: auto; /* Desplazamiento vertical */
+  
+}
+
+.virtual-wrapper {
+  position: relative;
+}
+
+.virtual-item {
+  height: 32px; /* Debe coincidir con `itemHeight` */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.memory-input {
+  width: 60px;
+  height: 32px;
+  text-align: center;
+}
+
+
+
 </style>
