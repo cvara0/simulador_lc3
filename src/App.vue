@@ -53,13 +53,13 @@ onMounted(() => {
   //window.addEventListener('wheel', handleWheel)
 })
 
-function limpiarMemoria(){
+const limpiarMemoria = () => {
   errorIns.value = false
   memoriaRam.value = new Array(65536).fill("0000")
   pc.value = hexadecimalADecimalConSigno(inicio.value)
   scrollTo(pc.value-7)
 }
-function limpiarRegistros(){
+const limpiarRegistros = () => {
   registros.value = new Array(8).fill("0000")
 }
 
@@ -78,7 +78,7 @@ const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(memoriaR
     
     } */ 
 
- watch(aBuscarIndex, ()=>{
+watch(aBuscarIndex, ()=>{
   if(aBuscarIndex.value)
     scrollTo(hexadecimalADecimalSinSigno(aBuscarIndex.value)) 
   else
@@ -107,7 +107,6 @@ function cargar(){
     .filter((r) => !r.valida)
 
   if (errores.value.length === 0) {
-    
     lineas.forEach((valor, i) => {
       memoriaRam.value[ini + i] = valor
     })
@@ -131,13 +130,13 @@ function recorrer(esRecorrer){
   } 
   else{
         errorIns.value = true
-        msjHalt.value = "Instrucción desconocida: "+memoriaRam.value[pc.value]
+        msjHalt.value = "Instrucción desconocida: "+ memoriaRam.value[pc.value]
       }
 } 
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function procesarIns(){
+const procesarIns = () => {
   if (memoriaRam.value[pc.value] === "0000") {
     errorIns.value = true
     msjHalt.value= "Ejecución finalizada"
@@ -169,41 +168,34 @@ function procesarIns(){
         pc.value++
         scrollTo(pc.value-7)
       }
-
     switch(ins.opcode) {
       case "0001": //add
-        registros.value[ins.dr] = registros.value[ins.sr1] + (ins.bitImm5 === 0 ? registros.value[ins.sr2] : ins.imm5);
+        registros.value[ins.dr] = registros.value[ins.sr1] + (ins.bitImm5 === 0 ? registros.value[ins.sr2] : ins.imm5)
         signo.value = Math.sign(registros.value[ins.dr]);
-        break;
+        break
       case "0101": //and
-        registros.value[ins.dr] = registros.value[ins.sr1] & (ins.bitImm5 === 0 ? registros.value[ins.sr2] : ins.imm5);
+        registros.value[ins.dr] = registros.value[ins.sr1] & (ins.bitImm5 === 0 ? registros.value[ins.sr2] : ins.imm5)
         signo.value = Math.sign(registros.value[ins.dr]);
-        break;
+        break
       case "1001": //not
-        registros.value[ins.dr] = ~registros.value[ins.sr1];
-        signo.value = Math.sign(registros.value[ins.dr]);
-        break;
+        registros.value[ins.dr] = ~registros.value[ins.sr1]
+        signo.value = Math.sign(registros.value[ins.dr])
+        break
       case "0000": //br
-        if (
-          (ins.n === "1" && signo.value === -1) ||
-          (ins.z === "1" && signo.value === 0) ||
-          (ins.p === "1" && signo.value === 1)
-        )
+        if ((ins.n === "1" && signo.value === -1) || (ins.z === "1" && signo.value === 0) || (ins.p === "1" && signo.value === 1))
           pc.value = pc.value + ins.PCoffset9
           scrollTo(pc.value-7)
         break;
       case "1100": //jmp ret
-        pc.value = registros.value[ins.baseR];
+        pc.value = registros.value[ins.baseR]
         scrollTo(pc.value-7)
         break;
       case "0100": //jsr jsrr
         let temp = pc.value;
         pc.value =
-          parseInt(insBin.substring(4, 5), 2) === 0
-            ? registros.value[ins.baseR]
-            : pc.value + ins.PCoffset11;
-        registros.value[7] = temp;
-        scrollTo(pc.value-7)
+          parseInt(insBin.substring(4, 5), 2) === 0 ? registros.value[ins.baseR] : pc.value + ins.PCoffset11
+          registros.value[7] = temp
+          scrollTo(pc.value-7)
         break;
       case "0010": //ld
         registros.value[ins.dr] = hexadecimalADecimalConSigno(memoriaRam.value[pc.value + ins.PCoffset9])
@@ -232,10 +224,8 @@ function procesarIns(){
         pc.value--
         break;
     }
-
     registros.value = registros.value.map((i) => decimalConSignoAHexadecimal(i))
   }
-
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -243,57 +233,23 @@ const esHexadecimal= (valor) => /^[0-9a-fA-F]+$/.test(valor)
 
 const hexadecimalABinario16 = (hex) => parseInt(hex, 16).toString(2).padStart(16, '0')
 
-
-function binarioC2ADecimal(binario) {
-  const longitud = binario.length;
-  const esNegativo = binario[0] === "1"; // Chequear el bit de signo
-
-  if (esNegativo) {
-    // Calcular complemento a dos
-    const valorPositivo = (~parseInt(binario, 2) + 1) & ((1 << longitud) - 1);
-    return -valorPositivo;
-  } else {
-    // Convertir directamente si es positivo
-    return parseInt(binario, 2);
-  }
-}
+const binarioC2ADecimal = (binario) => (binario[0] === "1")? -((~parseInt(binario, 2) + 1) & ((1 << binario.length) - 1)):parseInt(binario, 2)
+    
 
 /* function decimalABinarioC2(decimal){
   const mask = (1 << 16) - 1;
   return (decimal & mask).toString(2).padStart(16, '0');
 }
  */
-function decimalConSignoAHexadecimal(sdecimal) {
-  if (sdecimal >= 0) {
-    return sdecimal.toString(16).padStart(4, '0').toUpperCase()
-  } else {
-    return (Math.pow(2, 16) + sdecimal).toString(16).padStart(4, '0').toUpperCase()
-  }
-}
+const decimalConSignoAHexadecimal = (sdecimal) =>(sdecimal >= 0)?sdecimal.toString(16).padStart(4, '0').toUpperCase():(Math.pow(2, 16) + sdecimal).toString(16).padStart(4, '0').toUpperCase()
+ 
+const decimalSinSignoAHexadecimal = (udecimal) => udecimal.toString(16).toUpperCase().padStart(4, '0')
 
-function decimalSinSignoAHexadecimal(udecimal){
-    return udecimal.toString(16).toUpperCase().padStart(4, '0')
-  }
+const hexadecimalADecimalSinSigno = (hex) => parseInt(hex, 16)
 
-function hexadecimalADecimalSinSigno(hex){
-  return parseInt(hex, 16)
-}
-
-function hexadecimalADecimalConSigno(hex) {
-  // Convertir de hexadecimal a decimal sin signo
-  const valorSinSigno = parseInt(hex, 16);
-  // Calcular el límite para números positivos
-  const limiteSigno = Math.pow(2, 16 - 1);
-
-  // Si el valor supera o iguala al límite, es negativo
-  if (valorSinSigno >= limiteSigno) {
-    return valorSinSigno - Math.pow(2, 16);
-  } else {
-    return valorSinSigno;
-  }
-}
-
-function reiniciarPc(){
+const hexadecimalADecimalConSigno = (hex) => (parseInt(hex, 16) >= Math.pow(2, 16 - 1))?parseInt(hex, 16) - Math.pow(2, 16):parseInt(hex, 16)
+  
+const reiniciarPc = ()=>{
   errorIns.value = false
   pc.value = hexadecimalADecimalConSigno(inicio.value)
   scrollTo(pc.value-7)
@@ -316,6 +272,7 @@ function handleFileDrop(event) {
         reader.readAsText(file); // Leer el archivo como texto
       }
     }
+    
 function processFileContent(content) {
       fileContent = content; // Asignar el contenido del archivo al textarea
 
@@ -338,12 +295,8 @@ function processFileContent(content) {
  
   <div class="container mt-3 animate__animated animate__fadeIn" >
     <div class="row justify-content-center">
-      
-
 
       <div class="col-12 col-sm-12 col-md-5 col-lg-4 col-xl-4 col-xxl-4 animate__animated animate__fadeInLeft">
-      
-      
       <h4 class="mt-4">Instrucciones en Hexadecimal</h4>
         <div class="mb-3">
           <label for="formFileSm" class="form-label">Subir archivo .txt con las instrucciones (en proceso)</label>
@@ -352,7 +305,7 @@ function processFileContent(content) {
         <form @submit.prevent="cargar" class="form-floating d-grid gap-2">
 
           <div class="form-floating mb-2">
-            <input v-model="inicio" maxlength="4" type="text" class="form-control" id="floatingInput" placeholder="name@example.com">
+            <input v-model="inicio" maxlength="4" @focus="$event.target.select()" type="text" class="form-control" id="floatingInput" placeholder="name@example.com">
             <label for="floatingInput">Dirección de inicio:</label>
           </div>
 
@@ -374,13 +327,7 @@ function processFileContent(content) {
         <div v-else-if="memoriaRam.some((i) => i !== '0000')" class="mt-2">
           <div class="alert alert-success" role="alert">Carga OK👍</div>
         </div>
-      
-      
-      
       </div>
-
-
-
 
 
       <div class="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-4	col-xxl-4  animate__animated animate__fadeInUp">
@@ -393,8 +340,8 @@ function processFileContent(content) {
             Reiniciar PC
           </button>
           <div class="input-group mb-2">
-            <input v-model="aBuscarIndex" :disabled="aBuscarIns !== ''"  maxlength="4" type="text" class="form-control" placeholder="🔍Dirección" aria-label="Dirección">
-            <input v-model="aBuscarIns" :disabled="aBuscarIndex !== ''" maxlength="4" type="text" class="form-control" placeholder="🔍Instrucción" aria-label="Instrucción">
+            <input v-model="aBuscarIndex" :disabled="aBuscarIns !== ''" @focus="$event.target.select()" maxlength="4" type="text" class="form-control" placeholder="🔍Dirección" aria-label="Dirección">
+            <input v-model="aBuscarIns" :disabled="aBuscarIndex !== ''" @focus="$event.target.select()" maxlength="4" type="text" class="form-control" placeholder="🔍Instrucción" aria-label="Instrucción">
           </div>
         </div>
  
