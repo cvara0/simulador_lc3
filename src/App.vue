@@ -2,13 +2,14 @@
 import { ref, reactive, onMounted, computed,onUnmounted, watch } from "vue"
 import Registros from "./components/Registros.vue"
 import { useVirtualList } from "@vueuse/core";
-//subir archivo cargar en textarea drag and drop, ver lenguaje assembly
+//subir archivo cargar en textarea drag and drop, ver lenguaje assembly, agregar nzps
 //seguir con adaptar a la tabla original
 
 const registros = ref([])
 const memoriaRam = ref(new Array(65536).fill("0000"))
 
-const aBuscar = ref('')
+const aBuscarIndex = ref('')
+const aBuscarIns = ref('')
 const errores = ref([])
 const errorIns = ref(false)
 const cantIns = ref(0)
@@ -84,10 +85,18 @@ const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(memoriaR
     
     } */ 
 
- watch(aBuscar, ()=>{
-  if(aBuscar.value)
-    scrollTo(hexadecimalADecimalSinSigno(aBuscar.value)) 
+ watch(aBuscarIndex, ()=>{
+  if(aBuscarIndex.value)
+    scrollTo(hexadecimalADecimalSinSigno(aBuscarIndex.value)) 
   else
+    scrollTo(pc.value - 7)
+}) 
+
+watch(aBuscarIns, ()=>{
+  if(aBuscarIns.value){
+    scrollTo(memoriaRam.value.findIndex((item) => item?.toString().toLowerCase().includes(aBuscarIns.value.toLowerCase()))) 
+  }
+    else
     scrollTo(pc.value - 7)
 }) 
 
@@ -380,7 +389,7 @@ function processFileContent(content) {
         </form>
         
         <div v-if="errores.length > 0" class="mt-2">
-          <div class="alert alert-danger" role="alert">Errores de carga:</div>
+          <div class="alert alert-danger" role="alert">Errores de sintáxis:</div>
           <ul v-for="item in errores" class="list-group">
             <li class="list-group-item">En linea {{ item.linea }}</li>
           </ul>
@@ -401,8 +410,8 @@ function processFileContent(content) {
           </button>
   
           <div class="input-group mb-2">
-            <input v-model="aBuscar" maxlength="4" type="text" class="form-control" placeholder="🔍Buscar dirección" aria-label="Dirección">
-            <input v-model="aBuscar" maxlength="4" type="text" class="form-control" placeholder="🔍 (en proceso)Buscar instrucción" aria-label="Instrucción">
+            <input v-model="aBuscarIndex" :disabled="aBuscarIns !== ''"  maxlength="4" type="text" class="form-control" placeholder="🔍Dirección" aria-label="Dirección">
+            <input v-model="aBuscarIns" :disabled="aBuscarIndex !== ''" maxlength="4" type="text" class="form-control" placeholder="🔍Instrucción" aria-label="Instrucción">
           </div>
 
       
@@ -441,30 +450,29 @@ function processFileContent(content) {
           </tbody>
         </table> -->
 
-        <div v-bind="containerProps" class="virtual-container table table-hover table-ligth"> 
-            <div v-bind="wrapperProps"class="virtual-wrapper">
-              <!-- Renderiza los elementos visibles -->
+        <div v-bind="containerProps" class="virtual-container table table-hover table-light"> 
+            <div v-bind="wrapperProps"class="virtual-wrapper container text-center">
+          
               <div
                 v-for="item in list"
                 :key="item.index"
-                class="virtual-item"
+                class="virtual-item  row row-cols-2"
               >
-              <div
-                @click="pc = item.index; errorIns = false;" 
-                :class="[pc == item.index ? 'table-primary' : '']"
-               
-                >
-                {{ decimalSinSignoAHexadecimal(item.index) }}
-              </div>
-               <!--  <span>Dirección: {{ item.index }}</span> -->
-                <input
-                  type="text"
-
-                  v-model="memoriaRam[item.index]"
-                  @focus="$event.target.select()"
-                  maxlength="4"
-                  class="memory-input"
-                />
+                <div
+                  @click="pc = item.index; errorIns = false;" 
+                  :class="[pc == item.index ? 'table-primary' : '']"
+                  class="col text-center"
+                  >{{ decimalSinSignoAHexadecimal(item.index) }}
+                </div>
+                
+                  <input
+                    type="text"
+                    @input="memoriaRam[item.index]"
+                    :value="item.value.toUpperCase().padStart(4,'0')"
+                    @focus="$event.target.select()"
+                    maxlength="4"
+                    class="col text-center"
+                  />
               </div>
             </div>
           </div>
@@ -586,7 +594,7 @@ textarea.numbered {
 }
 
 .virtual-item {
-  height: 32px; /* Debe coincidir con `itemHeight` */
+  height: 34px; /* Debe coincidir con `itemHeight` */
   display: flex;
   align-items: center;
   justify-content: space-between;
