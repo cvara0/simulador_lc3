@@ -467,8 +467,7 @@ function processFileContent(content) {
                 
                   <input
                     type="text"
-                    @input="memoriaRam[item.index]"
-                    :value="item.value.toUpperCase().padStart(4,'0')"
+                    v-model="memoriaRam[item.index]"
                     @focus="$event.target.select()"
                     maxlength="4"
                     class="col text-center"
