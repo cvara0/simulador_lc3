@@ -1,9 +1,9 @@
 <script setup>
 import { ref, reactive, onMounted, computed,onUnmounted, watch } from "vue"
 import Registros from "./components/Registros.vue"
-import { useVirtualList } from "@vueuse/core";
+import { useVirtualList } from "@vueuse/core"
 //subir archivo cargar en textarea drag and drop, ver lenguaje assembly, agregar nzps
-//seguir con adaptar a la tabla original
+
 
 const registros = ref([])
 const memoriaRam = ref(new Array(65536).fill("0000"))
@@ -46,8 +46,6 @@ C040`,
 const inicio = ref("3000")
 const pc = ref(12288)
 
-
-
 onMounted(() => {
   limpiarMemoria()
   limpiarRegistros()
@@ -55,18 +53,13 @@ onMounted(() => {
   //window.addEventListener('wheel', handleWheel)
 })
 
-onUnmounted(() => {
-      /* window.removeEventListener('wheel', handleWheel) */
-    })
-
-const limpiarMemoria = () => {
+function limpiarMemoria(){
   errorIns.value = false
   memoriaRam.value = new Array(65536).fill("0000")
   pc.value = hexadecimalADecimalConSigno(inicio.value)
   scrollTo(pc.value-7)
-  
 }
-const limpiarRegistros = () => {
+function limpiarRegistros(){
   registros.value = new Array(8).fill("0000")
 }
 
@@ -100,11 +93,8 @@ watch(aBuscarIns, ()=>{
     scrollTo(pc.value - 7)
 }) 
 
-
-
-
 ///////////////////////////////////////////////////////////////////////////////
-const cargar = () => {
+function cargar(){
   let ini = hexadecimalADecimalSinSigno(inicio.value);
   errorIns.value = false
   const lineas = insTextoHexa.texto
@@ -122,14 +112,13 @@ const cargar = () => {
       memoriaRam.value[ini + i] = valor
     })
     pc.value = ini
-    /* desplazamiento.value = pc.value >= 0 && pc.value < 3 ? pc.value : pc.value - 3 */
     cantIns.value = lineas.length
     scrollTo(pc.value-7)
   }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
-const recorrer = (esRecorrer) => {
+function recorrer(esRecorrer){
   if (esHexadecimal(memoriaRam.value[pc.value])){
     if(esRecorrer){
         procesarIns()
@@ -181,7 +170,7 @@ function procesarIns(){
         scrollTo(pc.value-7)
       }
 
-    switch (ins.opcode) {
+    switch(ins.opcode) {
       case "0001": //add
         registros.value[ins.dr] = registros.value[ins.sr1] + (ins.bitImm5 === 0 ? registros.value[ins.sr2] : ins.imm5);
         signo.value = Math.sign(registros.value[ins.dr]);
@@ -269,11 +258,11 @@ function binarioC2ADecimal(binario) {
   }
 }
 
-const decimalABinarioC2 = (decimal) => {
+/* function decimalABinarioC2(decimal){
   const mask = (1 << 16) - 1;
   return (decimal & mask).toString(2).padStart(16, '0');
 }
-
+ */
 function decimalConSignoAHexadecimal(sdecimal) {
   if (sdecimal >= 0) {
     return sdecimal.toString(16).padStart(4, '0').toUpperCase()
@@ -304,32 +293,16 @@ function hexadecimalADecimalConSigno(hex) {
   }
 }
 
-
-const reiniciarPc = computed(()=>{
+function reiniciarPc(){
   errorIns.value = false
   pc.value = hexadecimalADecimalConSigno(inicio.value)
   scrollTo(pc.value-7)
- })
+ }
 
-//const indiceRecorrer = computed(() => decimalConSignoAHexadecimal(pc.value).padStart(4, "0") ) 
-
+///////////////////////////////////////////////////////////////////////////////
 
 const contarIns = computed(() => (insTextoHexa.texto.trim() === '') ? 0 : insTextoHexa.texto.split('\n').filter(line => line.trim() !== '').length)
-
-
-////////////////////////////////////////////////////////////////////////////////
-
-
-const ramDecimalAHexa = computed(() => decimalConSignoAHexadecimal(memoriaRam.value[pc.value]))
   
-
-///////////////////////////////////////////////////////////////////////
-    // Función para actualizar el valor en memoria
-const updateMemory = (index, newValue) => {
-      // Convierte el valor hexadecimal a decimal antes de guardarlo
-      memoriaRam.value[index] = parseInt(newValue, 16) || 0
-    }
-
 ////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -365,8 +338,13 @@ function processFileContent(content) {
  
   <div class="container mt-3 animate__animated animate__fadeIn" >
     <div class="row justify-content-center">
+      
+
+
       <div class="col-12 col-sm-12 col-md-5 col-lg-4 col-xl-4 col-xxl-4 animate__animated animate__fadeInLeft">
-        <h4 class="mt-4">Instrucciones en Hexadecimal</h4>
+      
+      
+      <h4 class="mt-4">Instrucciones en Hexadecimal</h4>
         <div class="mb-3">
           <label for="formFileSm" class="form-label">Subir archivo .txt con las instrucciones (en proceso)</label>
           <input class="form-control form-control-sm" id="formFileSm" type="file">
@@ -382,7 +360,6 @@ function processFileContent(content) {
             v-model="insTextoHexa.texto"
             class="numbered"
             style="height: 400px"
-    
           > </textarea>
           <h5>Cantidad de instrucciones: {{contarIns}}</h5>
           <button type="submit" class="btn btn-primary">Cargar a memoria ⤴</button>
@@ -397,7 +374,14 @@ function processFileContent(content) {
         <div v-else-if="memoriaRam.some((i) => i !== '0000')" class="mt-2">
           <div class="alert alert-success" role="alert">Carga OK👍</div>
         </div>
+      
+      
+      
       </div>
+
+
+
+
 
       <div class="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-4	col-xxl-4  animate__animated animate__fadeInUp">
         <h4>Memoria RAM {{ memoriaRam.length }} </h4>
@@ -405,51 +389,15 @@ function processFileContent(content) {
           <button @click="limpiarMemoria" type="button" class="col btn btn-danger m-2">
             Limpiar memoria
           </button>
-          <button @click="reiniciarPc" type="button" class="col btn btn-danger m-2">
+          <button @click="reiniciarPc()" type="button" class="col btn btn-danger m-2">
             Reiniciar PC
           </button>
-  
           <div class="input-group mb-2">
             <input v-model="aBuscarIndex" :disabled="aBuscarIns !== ''"  maxlength="4" type="text" class="form-control" placeholder="🔍Dirección" aria-label="Dirección">
             <input v-model="aBuscarIns" :disabled="aBuscarIndex !== ''" maxlength="4" type="text" class="form-control" placeholder="🔍Instrucción" aria-label="Instrucción">
           </div>
-
-      
         </div>
  
-  
-        
-        <!-- <table  class="table table-hover table-ligth">
-          <thead>
-            <tr>
-              <th scope="col">Dirección</th>
-              <th scope="col">Contenido</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(item, index) in memoriaRam" 
-              :class="[(desplazamiento <= index) && (index<=desplazamiento+6)? 'd-table-row' : 'd-none']"
-              @wheel="handleWheel"
-            >
-              <td 
-                @click="pc = index; errorIns = false;" 
-                :class="[pc == index ? 'table-primary' : '']"
-                >
-                {{ decimalSinSignoAHexadecimal(index)}}
-              </td>
-              
-              <td>
-                <input maxlength="4" :value="decimalConSignoAHexadecimal(item)" 
-                @input="updateMemory(index,$event.target.value)" type="text"
-                @focus="$event.target.select()"
-                style="width: 50px; text-align:center"
-                >
-              </td>
-            </tr>
-          </tbody>
-        </table> -->
-
         <div v-bind="containerProps" class="virtual-container table table-hover table-light"> 
             <div v-bind="wrapperProps"class="virtual-wrapper container text-center">
           
