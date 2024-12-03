@@ -3,7 +3,7 @@ import { ref, reactive, onMounted, computed,onUnmounted, watch } from "vue"
 import Registros from "./components/Registros.vue"
 import { useVirtualList } from "@vueuse/core"
 //subir archivo cargar en textarea drag and drop, ver lenguaje assembly, agregar nzps
-
+//solucionar fuera de rangos del pcs e instrucciones
 
 const registros = ref([])
 const memoriaRam = ref(new Array(65536).fill("0000"))
@@ -12,10 +12,12 @@ const aBuscarIndex = ref('')
 const aBuscarIns = ref('')
 const errores = ref([])
 const errorIns = ref(false)
+const esBreakPoint = ref(false)
 const cantIns = ref(0)
 const signo = ref("")
 const msjHalt = ref("")
-
+const msjBp = ref("")
+const breakPoints = ref([])
 
 const insTextoHexa = reactive({
   texto:`1265
@@ -125,6 +127,11 @@ function recorrer(esRecorrer){
     else{
       while(!errorIns.value) {
         procesarIns()
+        if (breakPoints.value.some(i => i === pc.value)) {
+          //breakPoints.value = breakPoints.value.filter(i => i!== pc.value)
+          msjBp.value = "BreakPoint " + decimalSinSignoAHexadecimal(pc.value) 
+          break
+        }
       }
     }
   } 
@@ -161,8 +168,8 @@ const procesarIns = () => {
 
     registros.value = registros.value.map((i) => hexadecimalADecimalConSigno(i))
 
-    if (pc.value > 35356) 
-      pc.value = 35356
+    if (pc.value > 35536 ) 
+      pc.value = 0
     else 
       {
         pc.value++
@@ -221,7 +228,7 @@ const procesarIns = () => {
       default:
         errorIns.value = true
         msjHalt.value = "Instrucción desconocida: "+memoriaRam.value[pc.value-1]
-        pc.value--
+       
         break;
     }
     registros.value = registros.value.map((i) => decimalConSignoAHexadecimal(i))
@@ -272,7 +279,7 @@ function handleFileDrop(event) {
         reader.readAsText(file); // Leer el archivo como texto
       }
     }
-    
+
 function processFileContent(content) {
       fileContent = content; // Asignar el contenido del archivo al textarea
 
@@ -314,7 +321,7 @@ function processFileContent(content) {
             class="numbered"
             style="height: 400px"
           > </textarea>
-          <h5>Cantidad de instrucciones: {{contarIns}}</h5>
+          <h6>Cantidad de instrucciones: {{contarIns}}</h6>
           <button type="submit" class="btn btn-primary">Cargar a memoria ⤴</button>
         </form>
         
@@ -345,46 +352,52 @@ function processFileContent(content) {
           </div>
         </div>
  
-        <div v-bind="containerProps" class="virtual-container table table-hover table-light"> 
-            <div v-bind="wrapperProps"class="virtual-wrapper container text-center">
+        <div v-bind="containerProps" class="virtual-container"> 
+            <div v-bind="wrapperProps"class="virtual-wrapper container">
           
-              <div
-                v-for="item in list"
-                :key="item.index"
-                class="virtual-item  row row-cols-2"
-              >
-                <div
+            <div
+              v-for="item in list"
+              :key="item.index"
+              class="virtual-item row row-cols-2"
+            >
+                <div :class="[pc == item.index ? 'bg-primary text-white' : '']" class="col row row-cols-2 text-center">
+                  <input class="col" style="accent-color: red;" type="checkbox" :value="item.index" v-model="breakPoints">
+                  <div
                   @click="pc = item.index; errorIns = false;" 
-                  :class="[pc == item.index ? 'table-primary' : '']"
-                  class="col text-center"
-                  >{{ decimalSinSignoAHexadecimal(item.index) }}
+                  class="col"
+                  style="z-index:15"
+                  >
+                    {{ decimalSinSignoAHexadecimal(item.index) }}
+                  </div>
                 </div>
-                
                   <input
                     type="text"
                     v-model="memoriaRam[item.index]"
                     @focus="$event.target.select()"
                     maxlength="4"
-                    class="col text-center"
+                    class="text-center"
+                    :class="[pc == item.index ? 'bg-primary text-white' : ' bg-white text-black']"
                   />
               </div>
             </div>
           </div>
             
-          <div v-show="errorIns" class="alert alert-danger" role="alert">
-          ⛔  {{msjHalt}}  ⛔
-          </div>
-      
+ 
             <!-- desplazamiento++   desplazamiento = pc >= 0 && pc < 3 ? pc : pc - 3  desplazamiento---->
         
      
         <div class="row justify-content-between">
+          <h6>PC: x{{ decimalSinSignoAHexadecimal(pc) }}</h6>
           <button @click="recorrer(false)" :disabled="errorIns" type="button" class="col btn btn-primary m-2">
              ▶️
           </button>
           <button @click="recorrer(true)" :disabled="errorIns" type="button" class="col btn btn-primary m-2">
-            ⏭️ PC: x{{ decimalSinSignoAHexadecimal(pc) }} 
+            ⏭️
           </button>
+          <div v-show="errorIns" class="alert alert-danger" role="alert">
+            ⛔ {{msjHalt}} ⛔
+          </div>
+      
         </div>
 
       </div>
@@ -501,7 +514,6 @@ textarea.numbered {
   height: 32px;
   text-align: center;
 }
-
 
 
 </style>
