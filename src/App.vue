@@ -1,9 +1,9 @@
-<script setup>
+<script setup >
 import { ref, reactive, onMounted, computed,onUnmounted, watch } from "vue"
 import Registros from "./components/Registros.vue"
-import { useVirtualList } from "@vueuse/core"
+import { useVirtualList, useDropZone } from "@vueuse/core"
 //subir archivo cargar en textarea drag and drop, ver lenguaje assembly, agregar nzps
-//solucionar fuera de rangos del pcs e instrucciones
+//solucionar fuera de rangos del pcs e instrucciones, con un watch para el pc value
 
 const registros = ref([])
 const memoriaRam = ref(new Array(65536).fill("0000"))
@@ -18,6 +18,9 @@ const signo = ref("")
 const msjHalt = ref("")
 const msjBp = ref("")
 const breakPoints = ref([])
+
+const dropZoneRef = ref(null)
+const isDragging = ref(false)
 
 const insTextoHexa = reactive({
   texto:`1265
@@ -53,6 +56,7 @@ onMounted(() => {
   limpiarRegistros()
   scrollTo(pc.value-7)
   //window.addEventListener('wheel', handleWheel)
+
 })
 
 const limpiarMemoria = () => {
@@ -67,7 +71,38 @@ const limpiarRegistros = () => {
 
 const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(memoriaRam.value, {
       itemHeight: 34, // Ajusta la altura de cada fila en píxeles
-    });
+    })
+////////////////////////////////////////////////
+
+const handleDrop = (event) => {
+      isDragging.value = false;
+      const files = Array.from(event.dataTransfer.files);
+
+      // Filtra solo archivos .txt
+      const txtFiles = files.filter((file) => file.type === "text/plain");
+
+      if (txtFiles.length > 0) {
+        console.log("Archivos .txt:", txtFiles);
+        // Leer el archivo
+        txtFiles.forEach((file) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            console.log("Contenido del archivo:", reader.result);
+          };
+          reader.readAsText(file);
+        });
+      } else {
+        alert("Por favor, sube solo archivos .txt");
+      }
+    }
+
+    const handleDragOver = () => {
+      isDragging.value = true; // Cambia a estilo de "hover"
+    };
+
+    const handleDragLeave = () => {
+      isDragging.value = false; // Restablece estilo
+    };
 
 /*  const handleWheel = (event) => {
       scrollDelta.value = event.deltaY
@@ -262,6 +297,7 @@ const reiniciarPc = ()=>{
   scrollTo(pc.value-7)
  }
 
+ const registrosHexaADecConSigno = computed(() => registros.value.map(i => hexadecimalADecimalConSigno(i)) )
 ///////////////////////////////////////////////////////////////////////////////
 
 const contarIns = computed(() => (insTextoHexa.texto.trim() === '') ? 0 : insTextoHexa.texto.split('\n').filter(line => line.trim() !== '').length)
@@ -269,27 +305,8 @@ const contarIns = computed(() => (insTextoHexa.texto.trim() === '') ? 0 : insTex
 ////////////////////////////////////////////////////////////////////////////////////
 
 
-function handleFileDrop(event) {
-      const file = event.dataTransfer.files[0]; // Obtener el archivo
-      if (file && file.type === 'text/plain') {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          processFileContent(e.target.result); // Procesar el contenido del archivo
-        };
-        reader.readAsText(file); // Leer el archivo como texto
-      }
-    }
 
-function processFileContent(content) {
-      fileContent = content; // Asignar el contenido del archivo al textarea
 
-      // Si deseas recorrer cada línea del archivo
-      const lines = content.split('\n');
-      lines.forEach((line, index) => {
-        console.log(`Línea ${index + 1}: ${line}`);
-      });
-    }
-  
 
 </script>
 
@@ -305,22 +322,37 @@ function processFileContent(content) {
 
       <div class="col-12 col-sm-12 col-md-5 col-lg-4 col-xl-4 col-xxl-4 animate__animated animate__fadeInLeft">
       <h4 class="mt-4">Instrucciones en Hexadecimal</h4>
-        <div class="mb-3">
+      <p>Escribe las instrucciones o arrastra y suelta un archivo</p> seguir con el drag and drop y resaltar area cuando esta sobre
+  <!--       <div class="mb-3">
           <label for="formFileSm" class="form-label">Subir archivo .txt con las instrucciones (en proceso)</label>
           <input class="form-control form-control-sm" id="formFileSm" type="file">
-        </div>
+        </div> -->
         <form @submit.prevent="cargar" class="form-floating d-grid gap-2">
 
-          <div class="form-floating mb-2">
-            <input v-model="inicio" maxlength="4" @focus="$event.target.select()" type="text" class="form-control" id="floatingInput" placeholder="name@example.com">
-            <label for="floatingInput">Dirección de inicio:</label>
-          </div>
-
+  
+       <!--    <div
+              
+              :class="{ 'is-dragging': isDragging }"
+              class="drop-zone"
+              
+            >
+              Arrastra archivos aquí
+          </div> -->
           <textarea
             v-model="insTextoHexa.texto"
             class="numbered"
             style="height: 400px"
-          > </textarea>
+            @drop.prevent="handleDrop"
+            @dragover.prevent="handleDragOver"
+            @dragleave="handleDragLeave"
+            :class="{ 'bg-primary': isDragging }"
+            ref="dropZoneRef"
+          > 
+          </textarea>
+          <div class="form-floating mb-2">
+            <input v-model="inicio" maxlength="4" @focus="$event.target.select()" type="text" class="form-control" id="floatingInput" placeholder="name@example.com">
+            <label for="floatingInput">Dirección de inicio:</label>
+          </div>
           <h6>Cantidad de instrucciones: {{contarIns}}</h6>
           <button type="submit" class="btn btn-primary">Cargar a memoria ⤴</button>
         </form>
@@ -405,6 +437,7 @@ function processFileContent(content) {
       <div class="col-12 col-sm-6 col-md-1 col-lg-4 col-xl-4 col-xxl-4 animate__animated animate__fadeInRight ">
         <Registros 
           :registros="registros"
+          :registrosDecConSigno = "registrosHexaADecConSigno"
           @limpiarRegistros = "limpiarRegistros"
         />
       </div>
@@ -412,7 +445,7 @@ function processFileContent(content) {
 
 
 
-    
+ <!--    
   <div class="mt-4" style="text-align:justify;">
     <h5>Consideraciones</h5>
     <p >
@@ -459,7 +492,7 @@ function processFileContent(content) {
       <li class="list-group-item">1DA1 ::: ADD R6, R6, #1 ::: R6 = R6 + 1 </li>
       <li class="list-group-item">09FE ::: BRn #-2 ::: Vuelve a la instrucción anterior, R6 = R6 + 1, hasta que R6 sea cero o positivo </li>
       <li class="list-group-item">C040 ::: JMP R1 ::: PC = R1 </li>
-    </ul>
+    </ul> -->
       
 
   </div>
@@ -515,5 +548,16 @@ textarea.numbered {
   text-align: center;
 }
 
+.drop-zone {
+  border: 2px dashed #ccc;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.3s, border-color 0.3s;
+}
 
+.drop-zone-hover {
+  background-color: #66b7fe;
+  border-color: #007bff;
+}
 </style>
