@@ -87,7 +87,8 @@ const handleDrop = (event) => {
         txtFiles.forEach((file) => {
           const reader = new FileReader();
           reader.onload = () => {
-            console.log("Contenido del archivo:", reader.result);
+            insTextoHexa.texto = reader.result
+            //console.log("Contenido del archivo:", reader.result);
           };
           reader.readAsText(file);
         });
@@ -164,7 +165,7 @@ function recorrer(esRecorrer){
         procesarIns()
         if (breakPoints.value.some(i => i === pc.value)) {
           //breakPoints.value = breakPoints.value.filter(i => i!== pc.value)
-          msjBp.value = "BreakPoint " + decimalSinSignoAHexadecimal(pc.value) 
+          //msjBp.value = "BreakPoint " + decimalSinSignoAHexadecimal(pc.value) 
           break
         }
       }
@@ -322,7 +323,7 @@ const contarIns = computed(() => (insTextoHexa.texto.trim() === '') ? 0 : insTex
 
       <div class="col-12 col-sm-12 col-md-5 col-lg-4 col-xl-4 col-xxl-4 animate__animated animate__fadeInLeft">
       <h4 class="mt-4">Instrucciones en Hexadecimal</h4>
-      <p>Escribe las instrucciones o arrastra y suelta un archivo</p> seguir con el drag and drop y resaltar area cuando esta sobre
+      <p>Escribe las instrucciones o arrastra y suelta un archivo de texto</p>
   <!--       <div class="mb-3">
           <label for="formFileSm" class="form-label">Subir archivo .txt con las instrucciones (en proceso)</label>
           <input class="form-control form-control-sm" id="formFileSm" type="file">
